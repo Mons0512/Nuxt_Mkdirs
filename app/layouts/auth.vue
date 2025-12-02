@@ -1,0 +1,40 @@
+<script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next';
+</script>
+
+<template>
+  <div>
+    <div class="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <!-- Auth form -->
+      <div class="flex items-center justify-center relative w-full h-full min-h-screen">
+        <!-- Back button -->
+        <NuxtLink
+          to="/"
+          class="absolute top-6 left-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft class="w-4 h-4" />
+          Back
+        </NuxtLink>
+
+        <div class="w-full max-w-md px-4">
+          <slot />
+        </div>
+      </div>
+
+      <!-- Brand image -->
+      <div class="hidden bg-muted lg:block">
+        <div class="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+          <div class="text-center space-y-4 p-8">
+            <div class="w-20 h-20 mx-auto bg-primary rounded-2xl flex items-center justify-center">
+              <span class="text-3xl font-bold text-primary-foreground">D</span>
+            </div>
+            <h2 class="text-2xl font-bold">Directory Template</h2>
+            <p class="text-muted-foreground max-w-sm">
+              The best directory template for your next project. Built with Nuxt 3 and Tailwind CSS.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

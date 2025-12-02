@@ -1,0 +1,1324 @@
+[
+  {
+    "name": "markdown",
+    "type": "string"
+  },
+  {
+    "description": "Settings for the website, not used for now",
+    "fields": [
+      {
+        "name": "title",
+        "type": "string"
+      }
+    ],
+    "name": "settings",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "description",
+        "type": "text"
+      }
+    ],
+    "name": "tag",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "initialValue": 0,
+        "description": "Priority of the group, used to sort the groups",
+        "name": "priority",
+        "type": "number"
+      }
+    ],
+    "name": "group",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "description": "The group of the category belongs to",
+        "to": [
+          {
+            "type": "group"
+          }
+        ],
+        "name": "group",
+        "type": "reference"
+      },
+      {
+        "initialValue": 0,
+        "description": "Priority of the category, used to sort the categories",
+        "name": "priority",
+        "type": "number"
+      }
+    ],
+    "name": "category",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "fields": [
+          {
+            "description": "Important for SEO and accessiblity",
+            "name": "alt",
+            "type": "string",
+            "title": "Alternative Text"
+          }
+        ],
+        "name": "icon",
+        "type": "image"
+      },
+      {
+        "initialValue": 0,
+        "description": "Priority of the collection, used to sort the collections",
+        "name": "priority",
+        "type": "number"
+      }
+    ],
+    "name": "collection",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "title": "User Name"
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "title": "User Email"
+      },
+      {
+        "readOnly": true,
+        "name": "emailVerified",
+        "type": "datetime",
+        "title": "Email Verification"
+      },
+      {
+        "name": "image",
+        "type": "string",
+        "title": "User Image"
+      },
+      {
+        "name": "link",
+        "type": "string",
+        "title": "User Link"
+      },
+      {
+        "readOnly": true,
+        "hidden": true,
+        "name": "password",
+        "type": "string",
+        "title": "User Password"
+      },
+      {
+        "initialValue": "USER",
+        "options": {
+          "list": [
+            "ADMIN",
+            "USER"
+          ]
+        },
+        "name": "role",
+        "type": "string"
+      },
+      {
+        "to": [
+          {
+            "type": "account"
+          }
+        ],
+        "name": "accounts",
+        "type": "reference"
+      },
+      {
+        "readOnly": true,
+        "name": "stripeCustomerId",
+        "type": "string"
+      }
+    ],
+    "name": "user",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "userId",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "type",
+        "type": "string",
+        "title": "Account Type"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "provider",
+        "type": "string",
+        "title": "Account Provider"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "providerAccountId",
+        "type": "string",
+        "title": "Account Provider Id"
+      },
+      {
+        "readOnly": true,
+        "name": "refreshToken",
+        "type": "string"
+      },
+      {
+        "readOnly": true,
+        "name": "accessToken",
+        "type": "string"
+      },
+      {
+        "readOnly": true,
+        "name": "expiresAt",
+        "type": "number"
+      },
+      {
+        "readOnly": true,
+        "name": "tokenType",
+        "type": "string"
+      },
+      {
+        "readOnly": true,
+        "name": "scope",
+        "type": "string"
+      },
+      {
+        "readOnly": true,
+        "name": "idToken",
+        "type": "string"
+      },
+      {
+        "readOnly": true,
+        "name": "sessionState",
+        "type": "string"
+      },
+      {
+        "to": [
+          {
+            "type": "user"
+          }
+        ],
+        "readOnly": true,
+        "name": "user",
+        "type": "reference"
+      }
+    ],
+    "name": "account",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "readOnly": true,
+        "name": "identifier",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "token",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "expires",
+        "type": "datetime",
+        "title": "Token Expiry"
+      }
+    ],
+    "name": "verificationToken",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "readOnly": true,
+        "name": "identifier",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "token",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "expires",
+        "type": "datetime",
+        "title": "Token Expiry"
+      }
+    ],
+    "name": "passwordResetToken",
+    "type": "document",
+    "title": "PasswordReset Token"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "initialValue": 0,
+        "description": "Priority of the category, used to sort the categories",
+        "name": "priority",
+        "type": "number"
+      }
+    ],
+    "name": "blogCategory",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "title",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "excerpt",
+        "type": "text"
+      },
+      {
+        "initialValue": false,
+        "description": "Featured posts will be displayed on the home page",
+        "name": "featured",
+        "type": "boolean",
+        "title": "Mark as Featured"
+      },
+      {
+        "description": "The categories that the post belongs to, may have multiple categories",
+        "of": [
+          {
+            "to": [
+              {
+                "type": "blogCategory"
+              }
+            ],
+            "type": "reference",
+            "title": "Reference to blog category"
+          }
+        ],
+        "name": "categories",
+        "type": "array"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "to": [
+          {
+            "type": "user"
+          }
+        ],
+        "name": "author",
+        "type": "reference"
+      },
+      {
+        "name": "body",
+        "type": "blockContent"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "fields": [
+          {
+            "description": "Important for SEO and accessiblity",
+            "name": "alt",
+            "type": "string",
+            "title": "Alternative Text"
+          }
+        ],
+        "name": "image",
+        "type": "image"
+      },
+      {
+        "description": "The posts that are related to this post",
+        "of": [
+          {
+            "to": [
+              {
+                "type": "blogPost"
+              }
+            ],
+            "type": "reference",
+            "title": "Reference to blog posts"
+          }
+        ],
+        "name": "relatedPosts",
+        "type": "array"
+      },
+      {
+        "description": "The post will be visible to the public only if the publish date is set",
+        "name": "publishDate",
+        "type": "datetime"
+      }
+    ],
+    "name": "blogPost",
+    "type": "document",
+    "title": "Blog Posts"
+  },
+  {
+    "of": [
+      {
+        "marks": {
+          "annotations": [
+            {
+              "fields": [
+                {
+                  "to": [
+                    {
+                      "type": "blogPost"
+                    },
+                    {
+                      "type": "item"
+                    },
+                    {
+                      "type": "page"
+                    }
+                  ],
+                  "name": "reference",
+                  "type": "reference"
+                }
+              ],
+              "name": "internalLink",
+              "type": "object",
+              "title": "Internal link"
+            },
+            {
+              "fields": [
+                {
+                  "validation": [
+                    {
+                      "rules": [
+                        {
+                          "flag": "uri",
+                          "constraint": {
+                            "options": {
+                              "scheme": [
+                                "/^http$/",
+                                "/^https$/"
+                              ],
+                              "allowRelative": false,
+                              "relativeOnly": false,
+                              "allowCredentials": false
+                            }
+                          }
+                        }
+                      ],
+                      "level": "error"
+                    }
+                  ],
+                  "name": "href",
+                  "type": "url",
+                  "title": "URL"
+                }
+              ],
+              "name": "link",
+              "type": "object",
+              "title": "URL"
+            }
+          ],
+          "decorators": [
+            {
+              "value": "strong",
+              "title": "Strong"
+            },
+            {
+              "value": "em",
+              "title": "Emphasis"
+            },
+            {
+              "value": "code",
+              "title": "Code"
+            },
+            {
+              "value": "underline",
+              "title": "Underline"
+            },
+            {
+              "value": "strike-through",
+              "title": "Strike"
+            }
+          ]
+        },
+        "lists": [
+          {
+            "value": "bullet",
+            "title": "Bullet"
+          },
+          {
+            "value": "number",
+            "title": "Numbered"
+          }
+        ],
+        "styles": [
+          {
+            "value": "normal",
+            "title": "Normal"
+          },
+          {
+            "value": "h1",
+            "title": "H1"
+          },
+          {
+            "value": "h2",
+            "title": "H2"
+          },
+          {
+            "value": "h3",
+            "title": "H3"
+          },
+          {
+            "value": "h4",
+            "title": "H4"
+          },
+          {
+            "value": "h5",
+            "title": "H5"
+          },
+          {
+            "value": "h6",
+            "title": "H6"
+          },
+          {
+            "value": "blockquote",
+            "title": "Quote"
+          }
+        ],
+        "of": [],
+        "type": "block"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "fields": [
+          {
+            "description": "Important for SEO and accessiblity",
+            "name": "alt",
+            "type": "string",
+            "title": "Alternative Text"
+          }
+        ],
+        "type": "image"
+      }
+    ],
+    "name": "blockContent",
+    "type": "array"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "title",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "name": "excerpt",
+        "type": "text"
+      },
+      {
+        "name": "body",
+        "type": "blockContent"
+      },
+      {
+        "name": "publishDate",
+        "type": "datetime"
+      }
+    ],
+    "name": "page",
+    "type": "document",
+    "title": "Pages"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "options": {
+          "source": "name",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "initialValue": false,
+        "description": "If the item is featured, it will be displayed in the featured section",
+        "name": "featured",
+        "type": "boolean",
+        "title": "Mark as Featured"
+      },
+      {
+        "description": "The link shown on the website",
+        "name": "link",
+        "type": "string"
+      },
+      {
+        "description": "The affiliate link, not shown on the website, leave it blank if you don't have one",
+        "name": "affiliateLink",
+        "type": "string"
+      },
+      {
+        "rows": 3,
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "description": "The collections of the item, may have multiple collections",
+        "of": [
+          {
+            "to": [
+              {
+                "type": "collection"
+              }
+            ],
+            "type": "reference",
+            "title": "Reference to collection"
+          }
+        ],
+        "name": "collections",
+        "type": "array"
+      },
+      {
+        "description": "The categories of the item, may have multiple categories",
+        "of": [
+          {
+            "to": [
+              {
+                "type": "category"
+              }
+            ],
+            "type": "reference",
+            "title": "Reference to category"
+          }
+        ],
+        "name": "categories",
+        "type": "array"
+      },
+      {
+        "description": "The tags of the item, may have multiple tags",
+        "of": [
+          {
+            "to": [
+              {
+                "type": "tag"
+              }
+            ],
+            "type": "reference",
+            "title": "Reference to tag"
+          }
+        ],
+        "name": "tags",
+        "type": "array"
+      },
+      {
+        "to": [
+          {
+            "type": "user"
+          }
+        ],
+        "name": "submitter",
+        "type": "reference"
+      },
+      {
+        "description": "The introduction of the item, in markdown format",
+        "name": "introduction",
+        "type": "markdown"
+      },
+      {
+        "fields": [
+          {
+            "description": "Important for SEO and accessiblity",
+            "name": "alt",
+            "type": "string",
+            "title": "Alternative Text"
+          }
+        ],
+        "name": "icon",
+        "type": "image"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "fields": [
+          {
+            "description": "Important for SEO and accessiblity",
+            "name": "alt",
+            "type": "string",
+            "title": "Alternative Text"
+          }
+        ],
+        "name": "image",
+        "type": "image"
+      },
+      {
+        "description": "*Required if you want to show the item in the directory",
+        "name": "publishDate",
+        "type": "datetime"
+      },
+      {
+        "initialValue": "free",
+        "options": {
+          "list": [
+            "free",
+            "pro",
+            "sponsor"
+          ],
+          "layout": "radio",
+          "direction": "horizontal"
+        },
+        "description": "The price plan of the item, chosen by the submitter",
+        "readOnly": true,
+        "name": "pricePlan",
+        "type": "string"
+      },
+      {
+        "initialValue": "submitting",
+        "options": {
+          "list": [
+            {
+              "title": "Submitting",
+              "value": "submitting"
+            },
+            {
+              "title": "Pending (Waiting for review)",
+              "value": "pending"
+            },
+            {
+              "title": "Approved",
+              "value": "approved"
+            },
+            {
+              "title": "Rejected",
+              "value": "rejected"
+            }
+          ],
+          "layout": "radio",
+          "direction": "horizontal"
+        },
+        "description": "The status of the item when the item is in free plan",
+        "hidden": "conditional",
+        "name": "freePlanStatus",
+        "type": "string"
+      },
+      {
+        "initialValue": "submitting",
+        "options": {
+          "list": [
+            {
+              "title": "Submitting",
+              "value": "submitting"
+            },
+            {
+              "title": "Pending (Waiting for payment)",
+              "value": "pending"
+            },
+            {
+              "title": "Success",
+              "value": "success"
+            },
+            {
+              "title": "Failed",
+              "value": "failed"
+            }
+          ],
+          "layout": "radio",
+          "direction": "horizontal"
+        },
+        "description": "The status of the item when the item is in pro plan",
+        "hidden": "conditional",
+        "name": "proPlanStatus",
+        "type": "string"
+      },
+      {
+        "initialValue": "Other reasons",
+        "options": {
+          "list": [
+            "The item is not good fit for our directory",
+            "The image of the item is not in good quality",
+            "The icon of the item is not in good quality",
+            "The information of the item is not clear",
+            "The backlink to our site is not provided",
+            "Other reasons"
+          ],
+          "layout": "dropdown"
+        },
+        "description": "The reason for rejecting the item",
+        "hidden": "conditional",
+        "name": "rejectionReason",
+        "type": "string"
+      },
+      {
+        "initialValue": "submitting",
+        "options": {
+          "list": [
+            {
+              "title": "Submitting",
+              "value": "submitting"
+            },
+            {
+              "title": "Pending (Waiting for payment)",
+              "value": "pending"
+            },
+            {
+              "title": "Success",
+              "value": "success"
+            },
+            {
+              "title": "Failed",
+              "value": "failed"
+            }
+          ],
+          "layout": "radio",
+          "direction": "horizontal"
+        },
+        "description": "The status of the item when the item is in sponsor plan",
+        "hidden": "conditional",
+        "name": "sponsorPlanStatus",
+        "type": "string"
+      },
+      {
+        "initialValue": false,
+        "description": "If the item is paid, it means the payment is successful",
+        "readOnly": true,
+        "name": "paid",
+        "type": "boolean"
+      },
+      {
+        "description": "The successful payment order of the submission",
+        "to": [
+          {
+            "type": "order"
+          }
+        ],
+        "hidden": "conditional",
+        "name": "order",
+        "type": "reference"
+      },
+      {
+        "initialValue": false,
+        "description": "If the item is force hidden, it will not be displayed regardless of the status. It's helpful when you want to hide an item temporarily.",
+        "name": "forceHidden",
+        "type": "boolean"
+      },
+      {
+        "initialValue": false,
+        "description": "(Deprecated) Website owner can mark the item as sponsor",
+        "name": "sponsor",
+        "type": "boolean"
+      },
+      {
+        "description": "The start date of the sponsor",
+        "hidden": "conditional",
+        "name": "sponsorStartDate",
+        "type": "datetime"
+      },
+      {
+        "description": "The end date of the sponsor",
+        "hidden": "conditional",
+        "name": "sponsorEndDate",
+        "type": "datetime"
+      },
+      {
+        "description": "Take a note for the item, not visible to the public",
+        "name": "note",
+        "type": "string"
+      }
+    ],
+    "name": "item",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "to": [
+          {
+            "type": "user"
+          }
+        ],
+        "readOnly": true,
+        "name": "user",
+        "type": "reference"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "to": [
+          {
+            "type": "item"
+          }
+        ],
+        "readOnly": true,
+        "name": "item",
+        "type": "reference"
+      },
+      {
+        "options": {
+          "list": [
+            "success",
+            "failed"
+          ],
+          "layout": "radio",
+          "direction": "horizontal"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "success",
+                  "failed"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "readOnly": true,
+        "name": "status",
+        "type": "string"
+      },
+      {
+        "description": "The date when the order is created",
+        "readOnly": true,
+        "name": "date",
+        "type": "datetime"
+      }
+    ],
+    "name": "order",
+    "type": "document"
+  }
+]
