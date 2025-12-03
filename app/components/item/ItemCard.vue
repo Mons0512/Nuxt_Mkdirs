@@ -32,8 +32,9 @@ const imageUrl = computed(() => {
       <!-- Image container -->
       <div class="group overflow-hidden relative aspect-video rounded-t-md transition-all border-b">
         <!-- Image -->
-        <div v-if="imageUrl" class="relative w-full h-full">
+        <div class="relative w-full h-full" v-if="imageUrl">
           <img
+            
             :src="imageUrl"
             :alt="`image of ${item.name}`"
             :title="`image of ${item.name}`"
@@ -52,27 +53,26 @@ const imageUrl = computed(() => {
               <span
                 v-for="category in item.categories"
                 :key="category._id"
-                class="text-xs font-medium text-white bg-black bg-opacity-50 px-2 py-1 rounded-md"
+                class="text-xs font-medium text-white bg-black opacity-75 px-2 py-1 rounded-full"
               >
                 {{ category.name }}
               </span>
             </div>
             <span
               v-else-if="item.category"
-              class="text-xs font-medium text-white bg-black bg-opacity-50 px-2 py-1 rounded-md"
+              class="text-xs font-medium text-white bg-black opacity-75 px-2 py-1 rounded-full"
             >
               {{ item.category }}
             </span>
           </div>
         </div>
-
         <!-- Visit Website overlay -->
         <a
           v-if="item.link"
           :href="item.link"
           target="_blank"
           rel="noopener noreferrer"
-          class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-300"
+          class="absolute inset-0 flex items-center justify-center bg-black opacity-0 group-hover:opacity-75 transition-opacity duration-300 rounded-t-lg"
         >
           <span class="text-white text-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             Visit Website
@@ -91,7 +91,7 @@ const imageUrl = computed(() => {
               )"
             >
               <span class="flex items-center gap-2">
-                <Award v-if="item.featured" class="w-5 h-5 flex-shrink-0 text-indigo-500" />
+                <Award v-if="item.featured" class="w-5 h-5 flex-shrink-0 text-primary" />
                 <span class="truncate">{{ item.name }}</span>
               </span>
             </h3>

@@ -13,7 +13,7 @@
   --color-card-foreground: hsl(224 71.4% 4.1%);
   --color-popover: hsl(0 0% 100%);
   --color-popover-foreground: hsl(224 71.4% 4.1%);
-  --color-primary: hsl(262.1 83.3% 57.8%);
+  --color-primary: hsl(155.5 100% 43.1%);
   --color-primary-foreground: hsl(210 20% 98%);
   --color-secondary: hsl(220 14.3% 95.9%);
   --color-secondary-foreground: hsl(220.9 39.3% 11%);
@@ -25,7 +25,7 @@
   --color-destructive-foreground: hsl(210 20% 98%);
   --color-border: hsl(220 13% 91%);
   --color-input: hsl(220 13% 91%);
-  --color-ring: hsl(262.1 83.3% 57.8%);
+  --color-ring: hsl(155.5 100% 43.1%);
 
   /* Border radius */
   --radius-sm: calc(0.5rem - 4px);
@@ -43,31 +43,69 @@
   --animate-fade-in: fade-in 0.4s;
 
   @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height); }
+    from {
+      height: 0;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
   }
 
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height); }
-    to { height: 0; }
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0;
+    }
   }
 
   @keyframes fade-up {
-    0% { opacity: 0; transform: translateY(10px); }
-    80% { opacity: 0.7; }
-    100% { opacity: 1; transform: translateY(0px); }
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    80% {
+      opacity: 0.7;
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0px);
+    }
   }
 
   @keyframes fade-down {
-    0% { opacity: 0; transform: translateY(-10px); }
-    80% { opacity: 0.6; }
-    100% { opacity: 1; transform: translateY(0px); }
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    80% {
+      opacity: 0.6;
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0px);
+    }
   }
 
   @keyframes fade-in {
-    0% { opacity: 0; }
-    50% { opacity: 0.6; }
-    100% { opacity: 1; }
+    0% {
+      opacity: 0;
+    }
+
+    50% {
+      opacity: 0.6;
+    }
+
+    100% {
+      opacity: 1;
+    }
   }
 }
 
@@ -79,7 +117,7 @@
   --color-card-foreground: hsl(210 20% 98%);
   --color-popover: hsl(224 71.4% 4.1%);
   --color-popover-foreground: hsl(210 20% 98%);
-  --color-primary: hsl(263.4 70% 50.4%);
+  --color-primary: hsl(155.5 100% 43.1%);
   --color-primary-foreground: hsl(210 20% 98%);
   --color-secondary: hsl(215 27.9% 16.9%);
   --color-secondary-foreground: hsl(210 20% 98%);
@@ -91,7 +129,7 @@
   --color-destructive-foreground: hsl(210 20% 98%);
   --color-border: hsl(215 27.9% 16.9%);
   --color-input: hsl(215 27.9% 16.9%);
-  --color-ring: hsl(263.4 70% 50.4%);
+  --color-ring: hsl(155.5 100% 43.1%);
 }
 
 /* Base styles */
@@ -145,9 +183,9 @@ body {
   transform: scale(1.05);
 }
 
-/* Gradient text - 与原版完全一致 */
+/* Gradient text - Updated to match green theme */
 .text-gradient_indigo-purple {
-  background: linear-gradient(90deg, #6366f1 0%, rgb(168 85 247 / 0.8) 100%);
+  background: linear-gradient(90deg, #00dc82 0%, #2dd4bf 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -238,16 +276,27 @@ body {
   max-width: 65ch;
 }
 
-.prose h1, .prose h2, .prose h3, .prose h4 {
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
   color: var(--color-foreground);
   font-weight: 700;
   margin-top: 2em;
   margin-bottom: 0.5em;
 }
 
-.prose h1 { font-size: 2.25rem; }
-.prose h2 { font-size: 1.5rem; }
-.prose h3 { font-size: 1.25rem; }
+.prose h1 {
+  font-size: 2.25rem;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+}
 
 .prose p {
   margin-top: 1.25em;
@@ -259,7 +308,8 @@ body {
   text-decoration: underline;
 }
 
-.prose ul, .prose ol {
+.prose ul,
+.prose ol {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
   padding-left: 1.625em;
@@ -279,10 +329,37 @@ body {
 }
 
 /* Size utilities */
-.size-4 { width: 1rem; height: 1rem; }
-.size-5 { width: 1.25rem; height: 1.25rem; }
-.size-6 { width: 1.5rem; height: 1.5rem; }
-.size-8 { width: 2rem; height: 2rem; }
-.size-9 { width: 2.25rem; height: 2.25rem; }
-.size-12 { width: 3rem; height: 3rem; }
-.size-16 { width: 4rem; height: 4rem; }
+.size-4 {
+  width: 1rem;
+  height: 1rem;
+}
+
+.size-5 {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.size-6 {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.size-8 {
+  width: 2rem;
+  height: 2rem;
+}
+
+.size-9 {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.size-12 {
+  width: 3rem;
+  height: 3rem;
+}
+
+.size-16 {
+  width: 4rem;
+  height: 4rem;
+}

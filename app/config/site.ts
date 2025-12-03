@@ -3,10 +3,10 @@ import type { SiteConfig } from '~/types';
 const SITE_URL = 'http://localhost:3000';
 
 export const siteConfig: SiteConfig = {
-  name: "Directory",
-  tagline: "This is a demo site for Mkdirs, the best directory website template",
+  name: "Nuxt Mkdirs",
+  tagline: "The Nuxt.js version of Mkdirs, the best directory website template",
   description:
-    "This is a demo site for Mkdirs template. Mkdirs is the ultimate directory website template. With Mkdirs, you can build any trending and profitable directory website in minutes, packed with Listings, Newsletter, Payment, CMS, Blog, Authentication, SEO, Themes and more",
+    "This is a demo site for Nuxt Mkdirs template. Built with Nuxt.js, it offers the same power as the original Mkdirs. Build trending and profitable directory websites in minutes.",
   keywords: [
     "Directory",
     "Template",
@@ -14,6 +14,7 @@ export const siteConfig: SiteConfig = {
     "Nuxt.js",
     "Vue.js",
     "Tailwindcss",
+    "Mkdirs",
   ],
   author: "Mkdirs",
   url: SITE_URL,

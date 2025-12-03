@@ -65,11 +65,11 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Directory - The Best Directory Website Template',
+      title: 'Nuxt Mkdirs - The Best Directory Website Template for Nuxt',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'This is a demo site for Mkdirs template. The ultimate directory website template.' },
+        { name: 'description', content: 'This is the Nuxt.js version of Mkdirs template. The ultimate directory website template built with Nuxt.' },
       ],
       link: [
         { rel: 'icon', type: 'image/png', href: '/logo.png' },

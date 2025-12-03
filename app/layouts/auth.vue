@@ -30,7 +30,7 @@ import { ArrowLeft } from 'lucide-vue-next';
             </div>
             <h2 class="text-2xl font-bold">Directory Template</h2>
             <p class="text-muted-foreground max-w-sm">
-              The best directory template for your next project. Built with Nuxt 3 and Tailwind CSS.
+              The best directory template for your next project. Built with Nuxt 4 and Tailwind CSS.
             </p>
           </div>
         </div>

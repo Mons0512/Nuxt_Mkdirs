@@ -1,15 +1,26 @@
 <script setup lang="ts">
-import { Sparkles, Star, FileText, ArrowRight } from 'lucide-vue-next';
-import { getSanityImageUrl } from '~/utils/sanity-image';
+const route = useRoute();
 
-// Fetch latest items from Sanity
-const { data: latestItemsData } = await useFetch('/api/items/latest', {
-  query: { count: 6 },
+// Reactive query params for items API
+const itemsQuery = computed(() => ({
+  limit: 12,
+  q: route.query.q || undefined,
+  category: route.query.category || undefined,
+  tag: route.query.tag || undefined,
+  sort: route.query.sort || undefined,
+  f: route.query.f || undefined,
+  page: route.query.page || undefined,
+}));
+
+// Fetch items from Sanity - reactive to URL changes
+const { data: itemsData } = await useFetch('/api/items', {
+  query: itemsQuery,
+  watch: [itemsQuery],
 });
 
-const latestItems = computed(() => {
-  if (!latestItemsData.value) return [];
-  return latestItemsData.value.map((item: any) => ({
+const items = computed(() => {
+  if (!itemsData.value?.items) return [];
+  return itemsData.value.items.map((item: any) => ({
     _id: item._id,
     name: item.name,
     slug: item.slug?.current || item.slug,
@@ -23,136 +34,95 @@ const latestItems = computed(() => {
   }));
 });
 
-// Fetch featured items from Sanity
-const { data: featuredItemsData } = await useFetch('/api/items/featured', {
-  query: { count: 6 },
-});
+const totalPages = computed(() => itemsData.value?.pagination?.totalPages || 1);
 
-const featuredItems = computed(() => {
-  if (!featuredItemsData.value) return [];
-  return featuredItemsData.value.map((item: any) => ({
-    _id: item._id,
-    name: item.name,
-    slug: item.slug?.current || item.slug,
-    link: item.link,
-    description: item.description,
-    icon: item.icon,
-    image: item.image,
-    featured: item.featured,
-    tags: item.tags?.map((t: any) => t.name) || [],
-    category: item.categories?.[0]?.name || '',
+// Fetch groups from Sanity
+const { data: groupsData } = await useFetch('/api/groups');
+
+// Fetch categories from Sanity
+const { data: categoriesData } = await useFetch('/api/categories');
+
+// Groups (if available)
+const groups = computed(() => {
+  if (!groupsData.value || groupsData.value.length === 0) return [];
+  return groupsData.value.map((group: any) => ({
+    _id: group._id,
+    name: group.name,
+    slug: group.slug?.current || group.slug,
+    categories: group.categories?.map((cat: any) => ({
+      _id: cat._id,
+      name: cat.name,
+      slug: cat.slug?.current || cat.slug,
+    })) || [],
   }));
 });
 
-// Fetch latest blog posts from Sanity
-const { data: blogPostsData } = await useFetch('/api/blog/latest', {
-  query: { count: 6 },
+// Categories (flat list)
+const categories = computed(() => {
+  if (!categoriesData.value) return [];
+  return categoriesData.value.map((cat: any) => ({
+    _id: cat._id,
+    name: cat.name,
+    slug: cat.slug?.current || cat.slug,
+  }));
 });
 
-const blogPosts = computed(() => {
-  if (!blogPostsData.value) return [];
-  return blogPostsData.value.map((post: any) => ({
-    _id: post._id,
-    title: post.title,
-    slug: post.slug?.current || post.slug,
-    excerpt: post.excerpt,
-    image: post.image ? getSanityImageUrl(post.image, { width: 800, height: 600 }) : '',
-    publishedAt: post.publishDate,
-    author: post.author?.name || '',
-    categories: post.categories?.map((c: any) => c.name) || [],
+// Categories options for filter
+const categoryOptions = computed(() => {
+  return categories.value.map((cat: any) => ({
+    value: cat.slug,
+    label: cat.name,
+  }));
+});
+
+// Fetch tags from Sanity
+const { data: tagsData } = await useFetch('/api/tags');
+
+const tags = computed(() => {
+  if (!tagsData.value) return [];
+  return tagsData.value.map((tag: any) => ({
+    value: tag.slug?.current || tag.slug,
+    label: tag.name,
   }));
 });
 
 useSeoMeta({
-  title: 'Home 2 - Directory Template',
-  description: 'Alternative home page layout with Latest Products, Featured Products, and Blog Posts.',
+  title: 'Home - Directory Template',
+  description: 'Discover the best tools, products, and resources for your next project.',
 });
 </script>
 
 <template>
   <LayoutContainer class="mt-12 mb-16 flex flex-col gap-12">
     <!-- Hero -->
-    <HomeHero url-prefix="/home2" />
+    <HomeHero />
 
-    <!-- Content Sections -->
-    <div class="flex flex-col gap-12">
-      <!-- Latest Products -->
-      <section v-if="latestItems.length > 0" class="flex flex-col gap-8">
-        <div class="flex items-center justify-between gap-8">
-          <div class="flex items-center gap-2">
-            <Sparkles class="w-4 h-4 text-indigo-500" />
-            <h2 class="text-lg tracking-wider font-semibold text-gradient_indigo-purple">
-              Latest Products
-            </h2>
+    <!-- Main Content with Sidebar -->
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Left sidebar: category/group list (desktop only) -->
+      <div class="hidden md:block w-[250px] shrink-0">
+        <div class="sticky top-24">
+          <HomeGroupList :groups="groups" :categories="categories" url-prefix="/home2" />
+        </div>
+      </div>
+
+      <!-- Right content: filter + item grid -->
+      <div class="flex-1 flex flex-col gap-8">
+        <!-- Search Filter -->
+        <HomeSearchFilter :tags="tags" :categories="categoryOptions" url-prefix="/home2" />
+
+        <!-- Item Grid -->
+        <SharedEmptyState v-if="items.length === 0" />
+        
+        <template v-else>
+          <ItemGrid :items="items" />
+
+          <!-- Pagination -->
+          <div class="mt-8 flex items-center justify-center">
+            <SharedPagination route-prefix="/home2" :total-pages="totalPages" />
           </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <ItemCard
-            v-for="item in latestItems"
-            :key="item._id"
-            :item="item"
-          />
-        </div>
-
-        <NuxtLink to="/search" class="mx-auto">
-          <UiButton size="lg" class="text-lg font-semibold px-16 group flex items-center gap-2">
-            <span class="tracking-wider">More Latest Products</span>
-            <ArrowRight class="size-4 icon-scale" />
-          </UiButton>
-        </NuxtLink>
-      </section>
-
-      <!-- Featured Products -->
-      <section v-if="featuredItems.length > 0" class="flex flex-col gap-8">
-        <div class="flex items-center justify-between gap-8">
-          <div class="flex items-center gap-2">
-            <Star class="w-4 h-4 text-indigo-500" />
-            <h2 class="text-lg tracking-wider font-semibold text-gradient_indigo-purple">
-              Featured Products
-            </h2>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <ItemCard
-            v-for="item in featuredItems"
-            :key="item._id"
-            :item="item"
-          />
-        </div>
-
-        <NuxtLink to="/search?f=featured" class="mx-auto">
-          <UiButton size="lg" class="text-lg font-semibold px-16 group flex items-center gap-2">
-            <span class="tracking-wider">More Featured Products</span>
-            <ArrowRight class="size-4 icon-scale" />
-          </UiButton>
-        </NuxtLink>
-      </section>
-
-      <!-- Latest Blog Posts -->
-      <section v-if="blogPosts.length > 0" class="flex flex-col gap-8">
-        <div class="flex items-center justify-between gap-8">
-          <div class="flex items-center gap-2">
-            <FileText class="w-4 h-4 text-indigo-500" />
-            <h2 class="text-lg tracking-wider font-semibold text-gradient_indigo-purple">
-              Latest Posts
-            </h2>
-          </div>
-        </div>
-
-        <BlogGrid :posts="blogPosts" />
-
-        <NuxtLink to="/blog" class="mx-auto">
-          <UiButton size="lg" class="text-lg font-semibold px-16 group flex items-center gap-2">
-            <span class="tracking-wider">More Blog Posts</span>
-            <ArrowRight class="size-4 icon-scale" />
-          </UiButton>
-        </NuxtLink>
-      </section>
+        </template>
+      </div>
     </div>
-
-    <!-- Newsletter -->
-    <HomeNewsletter />
   </LayoutContainer>
 </template>
