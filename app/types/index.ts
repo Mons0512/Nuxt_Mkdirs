@@ -93,6 +93,7 @@ export type FAQItem = {
 // Item types (simplified for demo)
 export type ItemInfo = {
   _id: string;
+  _createdAt?: string;
   name: string;
   slug: string;
   link: string;
@@ -105,9 +106,13 @@ export type ItemInfo = {
   featured?: boolean;
   pricePlan?: string;
   affiliateLink?: string;
+  publishDate?: string;
+  freePlanStatus?: string;
+  proPlanStatus?: string;
   sponsorPlanStatus?: string;
   sponsorStartDate?: string;
   sponsorEndDate?: string;
+  rejectionReason?: string;
 };
 
 export type CategoryInfo = {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Menu, ArrowRight, Home, Search, FolderOpen, Tag, BookOpen, DollarSign, Send, LayoutGrid } from 'lucide-vue-next';
+import { Menu, ArrowRight, Home, Search, FolderOpen, Tag, BookOpen, DollarSign, Send, LayoutGrid, LayoutDashboard, Settings } from 'lucide-vue-next';
 import { siteConfig } from '~/config/site';
 import { cn } from '~/utils';
-import type { MarketingConfig } from '~/types';
+import type { MarketingConfig, DashboardConfig } from '~/types';
 
 interface Props {
   scroll?: boolean;
-  config: MarketingConfig;
+  config: MarketingConfig | DashboardConfig;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +30,8 @@ const iconMap: Record<string, any> = {
   blog: BookOpen,
   pricing: DollarSign,
   submit: Send,
+  dashboard: LayoutDashboard,
+  settings: Settings,
 };
 
 function getIcon(iconName?: string) {

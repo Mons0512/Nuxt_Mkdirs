@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  layout: 'protected',
+});
+
 // Stepper steps
 const steps = [
   { title: 'Details', description: 'Enter product information' },
@@ -35,8 +39,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <LayoutContainer class="py-8">
-    <div>
+  <div>
       <!-- Header -->
       <div class="flex flex-col gap-8 md:gap-36 lg:gap-48 md:items-center md:flex-row md:justify-between">
         <div class="flex flex-col space-y-4">
@@ -65,6 +68,5 @@ useSeoMeta({
       <div class="mt-8">
         <SubmitForm :categories="categories" :tags="tags" />
       </div>
-    </div>
-  </LayoutContainer>
+  </div>
 </template>
