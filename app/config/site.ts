@@ -22,15 +22,13 @@ export const siteConfig: SiteConfig = {
   // set the logoDark if you have put the logo-dark.png in the public folder
   // logoDark: "/logo-dark.png",
   image: `${SITE_URL}/og.png?v=1`,
-  mail: "support@mkdirs.com",
+  mail: "pub@nuxt-saas.com",
   utm: {
-    source: "mkdirs.com",
+    source: "nuxt-saas.com",
     medium: "referral",
     campaign: "navigation",
   },
   links: {
-    twitter: "https://x.com/MkdirsHQ",
-    github: "https://github.com/MkdirsHQ",
-    youtube: "https://www.youtube.com/@MkdirsHQ",
+    twitter: "https://x.com/zhirentegong",
   },
 };

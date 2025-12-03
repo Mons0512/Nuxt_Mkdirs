@@ -8,9 +8,15 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   
   modules: [
+    '@nuxthub/core',
     '@nuxtjs/color-mode',
     '@nuxtjs/sanity',
   ],
+
+  hub: {
+    // NuxtHub configuration
+    // https://hub.nuxt.com/docs/getting-started/deploy
+  },
 
   sanity: {
     projectId: process.env.NUXT_PUBLIC_SANITY_PROJECT_ID,
