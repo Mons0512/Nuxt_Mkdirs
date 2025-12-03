@@ -104,6 +104,9 @@ watch(mobileMenuOpen, (isOpen) => {
 
         <!-- navbar right show sign in or account -->
         <div class="flex items-center gap-x-4">
+          <!-- Dark mode toggle -->
+          <LayoutModeToggle />
+
           <!-- Show user button when authenticated -->
           <LayoutUserButton v-if="isAuthenticated" />
           
@@ -142,6 +145,9 @@ watch(mobileMenuOpen, (isOpen) => {
 
         <!-- mobile navbar right -->
         <div class="flex items-center gap-x-4">
+          <!-- Dark mode toggle -->
+          <LayoutModeToggle />
+          
           <!-- Show user button when authenticated -->
           <LayoutUserButton v-if="isAuthenticated" />
           
