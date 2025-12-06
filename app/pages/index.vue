@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sparkles, Star, FileText, ArrowRight, Megaphone } from 'lucide-vue-next';
+import { Sparkles, Star, FileText, ArrowRight } from 'lucide-vue-next';
 import { getSanityImageUrl } from '~/utils/sanity-image';
 
 // Fetch latest items from Sanity
@@ -96,20 +96,6 @@ useSeoMeta({
 
     <!-- Content Sections -->
     <div class="flex flex-col gap-12">
-      <!-- Sponsored -->
-      <section v-if="sponsorItem" class="flex flex-col gap-8">
-        <div class="flex items-center gap-2">
-          <Megaphone class="w-4 h-4 text-primary" />
-          <h2 class="text-lg tracking-wider font-semibold text-gradient_indigo-purple">
-            Sponsored
-          </h2>
-        </div>
-
-        <div class="max-w-md">
-          <ItemSponsorItemCard :item="sponsorItem" />
-        </div>
-      </section>
-
       <!-- Latest Products -->
       <section v-if="latestItems.length > 0" class="flex flex-col gap-8">
         <div class="flex items-center justify-between gap-8">
@@ -125,8 +111,22 @@ useSeoMeta({
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <!-- First 2 items -->
           <ItemCard
-            v-for="item in latestItems"
+            v-for="item in latestItems.slice(0, 2)"
+            :key="item._id"
+            :item="item"
+          />
+          
+          <!-- Sponsor item inserted after first 2 -->
+          <ItemSponsorItemCard
+            v-if="sponsorItem"
+            :item="sponsorItem"
+          />
+          
+          <!-- Remaining items -->
+          <ItemCard
+            v-for="item in latestItems.slice(2)"
             :key="item._id"
             :item="item"
           />
