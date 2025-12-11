@@ -48,6 +48,11 @@ const errors = reactive({
   description: '',
 });
 
+// Check if URL is valid
+const isValidUrl = computed(() => {
+  return formData.link && /^https?:\/\/.+\..+/.test(formData.link);
+});
+
 // Validate form
 function validateForm(): boolean {
   let isValid = true;
@@ -247,30 +252,30 @@ async function handleImageUpload(event: Event) {
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-6 md:space-y-0">
           <!-- Link -->
           <div class="flex-1 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-sm font-medium text-primary">Link</label>
+            <label class="text-sm font-medium text-primary">Link</label>
+            <div class="flex gap-2">
+              <input
+                v-model="formData.link"
+                type="url"
+                placeholder="Enter the link to your product"
+                :class="cn(
+                  'flex-1 h-10 px-3 rounded-md border bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  errors.link ? 'border-destructive' : 'border-input'
+                )"
+              />
               <UiButton
                 v-if="config.public.supportAiSubmit"
                 type="button"
                 variant="outline"
-                size="sm"
-                :disabled="isAnalyzing || isUploading"
+                class="h-10 shrink-0 px-3 shadow-none"
+                :disabled="!isValidUrl || isAnalyzing || isUploading"
                 @click="handleAIAnalyze"
               >
-                <Sparkles v-if="!isAnalyzing" class="w-3.5 h-3.5 mr-1.5" />
-                <Loader2 v-else class="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                <Sparkles v-if="!isAnalyzing" class="w-4 h-4 mr-1.5" />
+                <Loader2 v-else class="w-4 h-4 mr-1.5 animate-spin" />
                 {{ isAnalyzing ? 'Analyzing...' : 'AI Auto-fill' }}
               </UiButton>
             </div>
-            <input
-              v-model="formData.link"
-              type="url"
-              placeholder="Enter the link to your product"
-              :class="cn(
-                'w-full h-10 px-3 rounded-md border bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                errors.link ? 'border-destructive' : 'border-input'
-              )"
-            />
             <p v-if="errors.link" class="text-sm text-destructive">{{ errors.link }}</p>
             <p v-if="analyzeError" class="text-sm text-destructive">{{ analyzeError }}</p>
           </div>
