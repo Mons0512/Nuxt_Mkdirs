@@ -4,8 +4,8 @@ import { LogOut, FileText, Settings } from 'lucide-vue-next';
 const { user, signOut, isLoading } = useAuth();
 
 const menuItems = [
-  { title: 'My Submissions', href: '/dashboard/submissions', icon: FileText },
-  { title: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { title: 'My Submissions', href: '/dashboard', icon: FileText },
+  { title: 'Settings', href: '/settings', icon: Settings },
 ];
 
 async function handleSignOut() {
