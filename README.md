@@ -21,6 +21,7 @@
 - 🔐 **Multiple Auth Methods** - Google / GitHub OAuth login
 - 💳 **Payment Integration** - Supports Stripe and Creem
 - 📧 **Email Service** - Resend for transactional emails + Newsletter
+- 🤖 **AI Auto-fill** - Automatically extract website info with AI
 - 🌙 **Dark Mode** - Auto-follows system theme
 - 📱 **Responsive Design** - Perfect mobile adaptation
 - ⚡ **NuxtHub Deploy** - One-click deploy to Cloudflare
@@ -183,6 +184,29 @@ openssl rand -base64 32
 NUXT_AUTH_SECRET=your_generated_secret
 ```
 
+### 5. AI Configuration (Optional)
+
+Enable AI-powered auto-fill feature for website submissions.
+
+```bash
+# Choose AI provider: google, deepseek, openai
+NUXT_AI_PROVIDER=google
+
+# Google Generative AI (https://aistudio.google.com/apikey)
+NUXT_GOOGLE_AI_API_KEY=xxxxx
+
+# DeepSeek (https://platform.deepseek.com/api_keys)
+NUXT_DEEPSEEK_API_KEY=xxxxx
+
+# OpenAI (https://platform.openai.com/settings/organization/api-keys)
+NUXT_OPENAI_API_KEY=xxxxx
+```
+
+When configured, users can click the "AI Auto-fill" button to automatically:
+- Extract website name and description
+- Generate detailed introduction
+- Download and upload logo/images
+- Suggest categories and tags
 
 ## 📁 Project Structure
 

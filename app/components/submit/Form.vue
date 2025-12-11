@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Smile, ImageIcon, Bold, Italic, Strikethrough, Quote, List, ListOrdered, Code, Link2, Eye, HelpCircle, Loader2 } from 'lucide-vue-next';
+import { Smile, ImageIcon, Bold, Italic, Strikethrough, Quote, List, ListOrdered, Code, Link2, Eye, HelpCircle, Loader2, Sparkles } from 'lucide-vue-next';
 import { cn } from '~/utils';
 
 interface CategoryOption {
@@ -19,9 +19,12 @@ interface Props {
 
 defineProps<Props>();
 
+const config = useRuntimeConfig();
 const isSubmitting = ref(false);
 const isUploading = ref(false);
+const isAnalyzing = ref(false);
 const uploadError = ref('');
+const analyzeError = ref('');
 
 // Form data
 const formData = reactive({
@@ -77,6 +80,56 @@ function validateForm(): boolean {
   }
 
   return isValid;
+}
+
+// AI auto-fill function
+async function handleAIAnalyze() {
+  if (!formData.link) {
+    errors.link = 'Please enter a URL first';
+    return;
+  }
+
+  if (!/^https?:\/\/.+/.test(formData.link)) {
+    errors.link = 'Please enter a valid URL';
+    return;
+  }
+
+  isAnalyzing.value = true;
+  analyzeError.value = '';
+  errors.link = '';
+
+  try {
+    const response = await $fetch<{ success: boolean; data: any }>('/api/ai/analyze-website', {
+      method: 'POST',
+      body: { url: formData.link },
+    });
+
+    if (response.success && response.data) {
+      // Fill form with AI results
+      formData.name = response.data.name || formData.name;
+      formData.description = response.data.description || formData.description;
+      formData.introduction = response.data.introduction || formData.introduction;
+      
+      // Set icon and image if available
+      if (response.data.icon) {
+        formData.iconId = response.data.icon._id;
+        formData.iconUrl = response.data.icon.url;
+      }
+      
+      if (response.data.image) {
+        formData.imageId = response.data.image._id;
+        formData.imageUrl = response.data.image.url;
+      }
+
+      // Note: Categories and tags need manual selection as they depend on your Sanity data
+      // You can enhance this by mapping AI suggestions to your actual category/tag IDs
+    }
+  } catch (error: any) {
+    console.error('AI analyze error:', error);
+    analyzeError.value = error.data?.message || 'Failed to analyze website. Please try again.';
+  } finally {
+    isAnalyzing.value = false;
+  }
 }
 
 // Handle form submission
@@ -194,7 +247,21 @@ async function handleImageUpload(event: Event) {
         <div class="flex flex-col md:flex-row md:space-x-4 space-y-6 md:space-y-0">
           <!-- Link -->
           <div class="flex-1 space-y-2">
-            <label class="text-sm font-medium text-primary">Link</label>
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-primary">Link</label>
+              <UiButton
+                v-if="config.public.supportAiSubmit"
+                type="button"
+                variant="outline"
+                size="sm"
+                :disabled="isAnalyzing || isUploading"
+                @click="handleAIAnalyze"
+              >
+                <Sparkles v-if="!isAnalyzing" class="w-3.5 h-3.5 mr-1.5" />
+                <Loader2 v-else class="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                {{ isAnalyzing ? 'Analyzing...' : 'AI Auto-fill' }}
+              </UiButton>
+            </div>
             <input
               v-model="formData.link"
               type="url"
@@ -205,6 +272,7 @@ async function handleImageUpload(event: Event) {
               )"
             />
             <p v-if="errors.link" class="text-sm text-destructive">{{ errors.link }}</p>
+            <p v-if="analyzeError" class="text-sm text-destructive">{{ analyzeError }}</p>
           </div>
 
           <!-- Name -->

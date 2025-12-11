@@ -10,6 +10,9 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^1.0.31",
+    "@ai-sdk/google": "^2.0.45",
+    "@ai-sdk/openai": "^2.0.80",
     "@auth/core": "^0.34.2",
     "@internationalized/date": "^3.10.0",
     "@nuxthub/core": "^0.8.27",
@@ -20,7 +23,9 @@
     "@sanity/uuid": "^3.0.2",
     "@tailwindcss/vite": "^4.1.17",
     "@vueuse/core": "^12.8.2",
+    "ai": "^5.0.110",
     "bcryptjs": "^2.4.3",
+    "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "creem_io": "^0.4.0",

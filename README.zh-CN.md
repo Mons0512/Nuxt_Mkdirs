@@ -21,6 +21,7 @@
 - 🔐 **多种认证方式** - Google / GitHub OAuth 登录
 - 💳 **支付集成** - 支持 Stripe 和 Creem（国内友好）
 - 📧 **邮件服务** - Resend 邮件发送 + Newsletter
+- 🤖 **AI 智能填充** - AI 自动提取网站信息
 - 🌙 **深色模式** - 自动跟随系统主题
 - 📱 **响应式设计** - 完美适配移动端
 - ⚡ **NuxtHub 部署** - 一键部署到 Cloudflare
@@ -183,6 +184,29 @@ openssl rand -base64 32
 NUXT_AUTH_SECRET=your_generated_secret
 ```
 
+### 5. AI 配置（可选）
+
+启用 AI 智能填充功能，自动提取网站信息。
+
+```bash
+# 选择 AI 提供商: google, deepseek, openai
+NUXT_AI_PROVIDER=google
+
+# Google Generative AI (https://aistudio.google.com/apikey)
+NUXT_GOOGLE_AI_API_KEY=xxxxx
+
+# DeepSeek (https://platform.deepseek.com/api_keys)
+NUXT_DEEPSEEK_API_KEY=xxxxx
+
+# OpenAI (https://platform.openai.com/settings/organization/api-keys)
+NUXT_OPENAI_API_KEY=xxxxx
+```
+
+配置后，用户可以点击“AI 自动填充”按钮，自动：
+- 提取网站名称和描述
+- 生成详细介绍
+- 下载并上传 Logo/图片
+- 智能推荐分类和标签
 
 ## 📁 项目结构
 
