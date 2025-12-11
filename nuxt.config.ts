@@ -12,7 +12,14 @@ export default defineNuxtConfig({
     '@nuxtjs/color-mode',
     '@nuxtjs/sanity',
     '@nuxtjs/sitemap',
+    'nuxt-gtag',
   ],
+
+  // Google Analytics 配置
+  // nuxt-gtag 模块会自动从 runtimeConfig.public.googleAnalyticsId 读取配置
+  gtag: {
+    enabled: true,
+  },
 
   // Sitemap configuration
   // https://nuxtseo.com/sitemap/getting-started/installation
@@ -24,7 +31,6 @@ export default defineNuxtConfig({
       '/auth/**',
     ],
   },
-
 
   hub: {
     // NuxtHub configuration

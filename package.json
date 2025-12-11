@@ -52,6 +52,7 @@
     "@sanity/vision": "^4.19.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.15.29",
+    "nuxt-gtag": "^4.1.0",
     "sanity": "^4.19.0",
     "sanity-plugin-asset-source-unsplash": "^4.0.1",
     "sanity-plugin-markdown": "^6.0.0",
