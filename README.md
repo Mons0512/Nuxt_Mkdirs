@@ -1,5 +1,7 @@
 <div align="center">
 
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 <img src="./public/logo.png" alt="Nuxt Mkdirs" width="120" />
 
 # Nuxt Mkdirs
@@ -237,12 +239,14 @@ If this project helps you, please consider:
 - ⭐ Give it a Star
 - 🐛 Submit Issues
 - 📢 Share with others
-<!-- - ☕ [Buy me a coffee](https://github.com/sponsors/your-username) -->
+- <a href="https://www.buymeacoffee.com/pubing967" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;" ></a>
+
 
 ## 📮 Contact
 
 <!-- - WeChat: w314709923x -->
 - GitHub: [@PBHAHAHA](https://github.com/PBHAHAHA)
+
 
 ---
 

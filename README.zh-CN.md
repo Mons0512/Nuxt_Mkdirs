@@ -1,17 +1,12 @@
 <div align="center">
 
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 <img src="./public/logo.png" alt="Nuxt Mkdirs" width="120" />
 
 # Nuxt Mkdirs
 
 **开源的目录网站模板，基于 Nuxt 4 构建**
-
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=flat-square&logo=nuxt.js)](https://nuxt.com)
-[![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.x-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-
-English | [简体中文](./README.zh-CN.md)
 
 [在线演示](https://demo.nuxt-mkdirs.com) 
 
