@@ -11,3 +11,4 @@ wrangler.jsonc
 mkdirs-template-main
 dist
 Nuxt_Mkdirs.zip
+.DS_Store
