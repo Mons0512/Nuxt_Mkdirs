@@ -1,46 +1,33 @@
-import { getUserByIdWithAccounts } from '../../utils/data/user';
+import { supabase } from '../../utils/supabase';
 
-/**
- * Session API - Get current user session
- * Validates session and fetches fresh user data from Sanity
- */
 export default defineEventHandler(async (event) => {
-  const sessionToken = getCookie(event, 'auth-token');
-  
-  if (!sessionToken) {
+  const token = getCookie(event, 'sb-access-token');
+
+  if (!token) {
     return { user: null };
   }
 
-  try {
-    // Decode the session token (base64 encoded JSON)
-    const sessionData = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf-8'));
-    
-    // Fetch fresh user data from Sanity (with accounts to check OAuth status)
-    const user = await getUserByIdWithAccounts(sessionData.id);
-    
-    if (!user) {
-      // User no longer exists, clear session
-      deleteCookie(event, 'auth-token');
-      return { user: null };
-    }
+  const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    // Check if user is OAuth (has accounts linked)
-    const isOAuth = user.accounts && user.accounts.length > 0;
-
-    return {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        role: user.role,
-        link: user.link,
-        isOAuth,
-      },
-    };
-  } catch (error) {
-    // Invalid token, clear it
-    deleteCookie(event, 'auth-token');
+  if (error || !user) {
+    deleteCookie(event, 'sb-access-token');
     return { user: null };
   }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('name, image, link, role')
+    .eq('id', user.id)
+    .single();
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: profile?.name || user.user_metadata?.name,
+      image: profile?.image || user.user_metadata?.avatar_url,
+      link: profile?.link || user.user_metadata?.link,
+      role: profile?.role || 'USER',
+    },
+  };
 });

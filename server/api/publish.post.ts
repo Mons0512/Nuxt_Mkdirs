@@ -1,6 +1,5 @@
-/**
- * Publish an item by ID (passed in body)
- */
+import { supabaseAdmin } from '../utils/supabase';
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const id = body?.id;
@@ -12,25 +11,24 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  try {
-    // Update item to published state
-    const result = await sanityClient
-      .patch(id)
-      .set({
-        publishDate: new Date().toISOString(),
-        freePlanStatus: 'approved',
-      })
-      .commit();
+  const { error } = await supabaseAdmin
+    .from('items')
+    .update({
+      publish_date: new Date().toISOString(),
+      free_plan_status: 'approved',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
 
-    return {
-      success: true,
-      item: result,
-    };
-  } catch (error) {
+  if (error) {
     console.error('Publish error:', error);
     throw createError({
       statusCode: 500,
       message: 'Failed to publish item',
     });
   }
+
+  return {
+    success: true,
+  };
 });

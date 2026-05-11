@@ -1,6 +1,7 @@
-/**
- * Get single category by slug with its items
- */
+import { supabase } from '../../utils/supabase';
+import { getCategoryBySlug } from '../../utils/db/categories';
+import { getItems } from '../../utils/db/items';
+
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug');
   const query = getQuery(event);
@@ -15,20 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get category
-    const categoryQuery = `*[_type == "category" && slug.current == $slug][0] {
-      _id,
-      _createdAt,
-      name,
-      slug,
-      description,
-      icon {
-        ...,
-        "blurDataURL": asset->metadata.lqip,
-      }
-    }`;
-
-    const category = await sanityFetch<any>(categoryQuery, { slug });
+    const category = await getCategoryBySlug(supabase, slug);
 
     if (!category) {
       throw createError({
@@ -37,43 +25,15 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Count items in category
-    const countQuery = `count(*[_type == "item" && defined(slug.current) 
-      && forceHidden != true && sponsor != true
-      && $slug in categories[]->slug.current])`;
-    const total = await sanityFetch<number>(countQuery, { slug });
-
-    // Get items in category
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const itemsQuery = `*[_type == "item" && defined(slug.current) 
-      && forceHidden != true && sponsor != true
-      && $slug in categories[]->slug.current] 
-      | order(coalesce(featured, false) desc, _createdAt desc) [${start}...${end}] {
-        _id,
-        _createdAt,
-        name,
-        slug,
-        description,
-        link,
-        featured,
-        icon {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        categories[]->,
-        tags[]->,
-      }`;
-
-    const items = await sanityFetch<any[]>(itemsQuery, { slug });
+    const { items, total } = await getItems(supabase, {
+      page,
+      limit,
+      category: slug,
+    });
 
     return {
       category,
-      items: items || [],
+      items,
       pagination: {
         page,
         limit,

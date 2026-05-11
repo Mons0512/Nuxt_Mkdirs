@@ -2,7 +2,7 @@
 import { cn } from '~/utils';
 
 interface BlogCategory {
-  _id: string;
+  id: string;
   name: string;
   slug: string;
 }
@@ -50,7 +50,7 @@ const currentSlug = computed(() => {
           <!-- Category buttons -->
           <NuxtLink
             v-for="category in categories"
-            :key="category._id"
+            :key="category.id"
             :to="`${urlPrefix}/category/${category.slug}`"
             :class="cn(
               'h-7 rounded-full px-5 flex items-center justify-center text-sm font-medium transition-colors',

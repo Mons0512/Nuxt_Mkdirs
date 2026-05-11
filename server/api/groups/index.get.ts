@@ -1,23 +1,10 @@
-/**
- * Get groups list with categories from Sanity
- */
+import { supabase } from '../../utils/supabase';
+import { getGroupsWithCategories } from '../../utils/db/categories';
+
 export default defineEventHandler(async () => {
   try {
-    const query = `*[_type == "group"] | order(priority desc, _createdAt asc) {
-      _id,
-      name,
-      slug,
-      priority,
-      "categories": *[_type == 'category' && references(^._id)] | order(priority desc, _createdAt asc) { 
-        _id,
-        name,
-        slug,
-        priority,
-      }
-    }`;
-
-    const groups = await sanityFetch<any[]>(query);
-    return groups;
+    const groups = await getGroupsWithCategories(supabase);
+    return groups || [];
   } catch (error) {
     console.error('Error fetching groups:', error);
     throw createError({

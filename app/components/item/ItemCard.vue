@@ -1,22 +1,27 @@
 <script setup lang="ts">
 import { ArrowRight, Award, Hash } from 'lucide-vue-next';
-import type { ItemInfo } from '~/types';
 import { cn } from '~/utils';
-import { getSanityImageUrl } from '~/utils/sanity-image';
 
 interface Props {
-  item: ItemInfo;
+  item: {
+    id?: string;
+    name?: string;
+    slug?: string;
+    link?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    image?: string | null;
+    featured?: boolean;
+    tags?: Array<{ id?: string; name: string; slug?: string }>;
+    categories?: Array<{ id?: string; name: string; slug?: string }>;
+    category?: string;
+  };
 }
 
 const props = defineProps<Props>();
 
-// Get image URL from Sanity image or string
 const imageUrl = computed(() => {
-  const img = props.item.image as any;
-  if (img?.asset) {
-    return getSanityImageUrl(img, { width: 800, height: 450 });
-  }
-  return typeof img === 'string' ? img : '';
+  return props.item.image || '';
 });
 </script>
 
@@ -27,32 +32,26 @@ const imageUrl = computed(() => {
       'hover:bg-accent/60 transition-colors duration-300'
     )"
   >
-    <!-- Top section -->
     <div class="flex flex-col gap-4">
-      <!-- Image container -->
       <div class="group overflow-hidden relative aspect-video rounded-t-md transition-all border-b">
-        <!-- Image -->
         <div class="relative w-full h-full" v-if="imageUrl">
           <img
-            
             :src="imageUrl"
             :alt="`image of ${item.name}`"
             :title="`image of ${item.name}`"
             class="object-cover w-full h-full image-scale"
           />
         </div>
-        <!-- Placeholder when no image -->
         <div v-else class="relative w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
           <span class="text-4xl font-bold text-muted-foreground/30">{{ item.name?.charAt(0)?.toUpperCase() || '?' }}</span>
         </div>
 
-        <!-- Category badges -->
         <div class="absolute left-2 bottom-2 opacity-100 transition-opacity duration-300">
           <div class="flex flex-col gap-2">
             <div v-if="item.categories && item.categories.length > 0" class="flex flex-wrap gap-1">
               <span
                 v-for="category in item.categories"
-                :key="category._id"
+                :key="category.id || category.name"
                 class="text-xs font-medium text-white bg-black opacity-75 px-2 py-1 rounded-full"
               >
                 {{ category.name }}
@@ -66,7 +65,6 @@ const imageUrl = computed(() => {
             </span>
           </div>
         </div>
-        <!-- Visit Website overlay -->
         <a
           v-if="item.link"
           :href="item.link"
@@ -80,7 +78,6 @@ const imageUrl = computed(() => {
         </a>
       </div>
 
-      <!-- Center content -->
       <NuxtLink :to="`/item/${item.slug}`" class="flex flex-col gap-4 group">
         <div class="px-4 flex flex-col gap-4">
           <div class="flex items-center justify-between gap-4">
@@ -101,7 +98,6 @@ const imageUrl = computed(() => {
             </div>
           </div>
 
-          <!-- Description - min-h-[3rem] ensures consistent card height -->
           <p class="text-sm line-clamp-2 leading-relaxed min-h-[3rem]">
             {{ item.description }}
           </p>
@@ -109,18 +105,17 @@ const imageUrl = computed(() => {
       </NuxtLink>
     </div>
 
-    <!-- Bottom section: Tags -->
     <div class="px-4 pb-4 flex justify-end items-center">
       <div v-if="item.tags && item.tags.length > 0" class="flex flex-wrap gap-2 items-center">
         <NuxtLink
           v-for="(tag, index) in item.tags.slice(0, 5)"
           :key="index"
-          :to="`/tag/${typeof tag === 'string' ? tag.toLowerCase().replace(/[\s/]+/g, '-') : (tag.slug?.current || tag.slug || tag.name?.toLowerCase().replace(/[\s/]+/g, '-'))}`"
+          :to="`/tag/${(tag.slug || tag.name || '').toLowerCase().replace(/[\s/]+/g, '-')}`"
           class="flex items-center justify-center space-x-0.5 group"
         >
           <Hash class="w-3 h-3 text-muted-foreground icon-scale" />
           <span class="text-sm text-muted-foreground link-underline">
-            {{ typeof tag === 'string' ? tag : tag.name }}
+            {{ tag.name }}
           </span>
         </NuxtLink>
         <span v-if="item.tags.length > 5" class="text-sm text-muted-foreground px-1">

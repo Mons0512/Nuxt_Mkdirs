@@ -1,17 +1,13 @@
 import { z } from 'zod';
-import { uuid } from '@sanity/uuid';
+import { supabase } from '../../utils/supabase';
 
 const ResetSchema = z.object({
   email: z.string().email('Invalid email'),
 });
 
-/**
- * Send password reset email
- */
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  // Validate input
   const validatedFields = ResetSchema.safeParse(body);
   if (!validatedFields.success) {
     throw createError({
@@ -22,40 +18,13 @@ export default defineEventHandler(async (event) => {
 
   const { email } = validatedFields.data;
 
-  // Find user
-  const user = await getUserByEmail(email);
-  if (!user) {
-    // Don't reveal if user exists
-    return {
-      success: true,
-      message: 'If an account exists, a reset email has been sent.',
-    };
-  }
-
-  // Generate reset token
-  const token = uuid();
-  const expires = new Date(Date.now() + 3600 * 1000); // 1 hour
-
-  // Delete existing tokens for this email
-  const existingTokens = await sanityFetch<any[]>(
-    `*[_type == "passwordResetToken" && email == $email]`,
-    { email }
-  );
-
-  for (const t of existingTokens || []) {
-    await sanityClient.delete(t._id);
-  }
-
-  // Create new token
-  await sanityClient.create({
-    _type: 'passwordResetToken',
-    email,
-    token,
-    expires: expires.toISOString(),
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${getRequestURL(event).origin}/auth/callback/reset`,
   });
 
-  // Send reset email
-  await sendPasswordResetEmail(user.name || 'User', email, token);
+  if (error) {
+    console.error('Password reset error:', error);
+  }
 
   return {
     success: true,

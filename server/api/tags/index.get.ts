@@ -1,17 +1,9 @@
-/**
- * Get all tags from Sanity
- */
+import { supabase } from '../../utils/supabase';
+import { getTags } from '../../utils/db/tags';
+
 export default defineEventHandler(async () => {
   try {
-    const query = `*[_type == "tag" && defined(slug.current)] 
-      | order(slug.current asc) {
-        _id,
-        name,
-        slug
-      }`;
-
-    const tags = await sanityFetch<any[]>(query);
-
+    const tags = await getTags(supabase);
     return tags || [];
   } catch (error) {
     console.error('Error fetching tags:', error);

@@ -1,27 +1,22 @@
 <script setup lang="ts">
-import { getSanityImageUrl } from '~/utils/sanity-image';
-
 const route = useRoute();
 
-// Fetch blog categories from Sanity
 const { data: categoriesData } = await useFetch('/api/blog/categories');
 
 const categories = computed(() => {
   if (!categoriesData.value) return [];
   return categoriesData.value.map((cat: any) => ({
-    _id: cat._id,
+    id: cat.id,
     name: cat.name,
-    slug: cat.slug?.current || cat.slug,
+    slug: cat.slug,
   }));
 });
 
-// Reactive query params
 const postsQuery = computed(() => ({
   limit: 6,
   page: route.query.page || undefined,
 }));
 
-// Fetch blog posts from Sanity
 const { data: postsData } = await useFetch('/api/blog', {
   query: postsQuery,
   watch: [postsQuery],
@@ -30,12 +25,12 @@ const { data: postsData } = await useFetch('/api/blog', {
 const posts = computed(() => {
   if (!postsData.value?.posts) return [];
   return postsData.value.posts.map((post: any) => ({
-    _id: post._id,
+    id: post.id,
     title: post.title,
-    slug: post.slug?.current || post.slug,
+    slug: post.slug,
     excerpt: post.excerpt,
-    image: post.image ? getSanityImageUrl(post.image, { width: 800, height: 400 }) : '',
-    publishedAt: post.publishDate,
+    image: post.image_url || '',
+    publishedAt: post.publish_date,
     author: post.author?.name || '',
     categories: post.categories?.map((c: any) => c.name) || [],
   }));

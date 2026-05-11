@@ -1,17 +1,15 @@
 import { z } from 'zod';
+import { supabase } from '../../utils/supabase';
+import { setAuthCookie } from '../../utils/supabase';
 
 const LoginSchema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(1, 'Password is required'),
 });
 
-/**
- * Login with credentials
- */
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  // Validate input
   const validatedFields = LoginSchema.safeParse(body);
   if (!validatedFields.success) {
     throw createError({
@@ -22,60 +20,36 @@ export default defineEventHandler(async (event) => {
 
   const { email, password } = validatedFields.data;
 
-  // Find user
-  const user = await getUserByEmail(email);
-  if (!user) {
-    throw createError({
-      statusCode: 401,
-      message: 'Invalid credentials',
-    });
-  }
-
-  // Check password
-  if (!user.password) {
-    throw createError({
-      statusCode: 401,
-      message: 'Please use OAuth to sign in',
-    });
-  }
-
-  const passwordsMatch = await verifyPassword(password, user.password);
-  if (!passwordsMatch) {
-    throw createError({
-      statusCode: 401,
-      message: 'Invalid credentials',
-    });
-  }
-
-  // Check email verification
-  if (!user.emailVerified) {
-    throw createError({
-      statusCode: 401,
-      message: 'Please verify your email first',
-    });
-  }
-
-  // Create session data
-  const sessionData = {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    image: user.image,
-    role: user.role,
-  };
-
-  // Set session cookie (simple base64 encoded JSON for now)
-  const sessionToken = Buffer.from(JSON.stringify(sessionData)).toString('base64');
-  setCookie(event, 'auth-token', sessionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/',
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   });
+
+  if (error) {
+    throw createError({
+      statusCode: 401,
+      message: error.message,
+    });
+  }
+
+  if (data.user) {
+    setAuthCookie(event, data.session.access_token, data.session.refresh_token);
+  }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('name, image, role')
+    .eq('id', data.user.id)
+    .single();
 
   return {
     success: true,
-    user: sessionData,
+    user: {
+      id: data.user.id,
+      email: data.user.email,
+      name: profile?.name || data.user.user_metadata?.name,
+      image: profile?.image || data.user.user_metadata?.avatar_url,
+      role: profile?.role || 'USER',
+    },
   };
 });

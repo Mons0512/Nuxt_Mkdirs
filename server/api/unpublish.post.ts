@@ -1,8 +1,5 @@
-import { sanityClient } from '../utils/sanity';
+import { supabaseAdmin } from '../utils/supabase';
 
-/**
- * Unpublish an item by ID (passed in body)
- */
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const id = body?.id;
@@ -14,22 +11,24 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  try {
-    // Update item to unpublished state
-    const result = await sanityClient
-      .patch(id)
-      .unset(['publishDate'])
-      .commit();
+  const { error } = await supabaseAdmin
+    .from('items')
+    .update({
+      publish_date: null,
+      free_plan_status: 'submitting',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
 
-    return {
-      success: true,
-      item: result,
-    };
-  } catch (error) {
+  if (error) {
     console.error('Unpublish error:', error);
     throw createError({
       statusCode: 500,
       message: 'Failed to unpublish item',
     });
   }
+
+  return {
+    success: true,
+  };
 });

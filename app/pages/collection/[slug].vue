@@ -4,13 +4,11 @@ import { ArrowLeft } from 'lucide-vue-next';
 const route = useRoute();
 const slug = computed(() => route.params.slug as string);
 
-// Reactive query params
 const collectionQuery = computed(() => ({
   limit: 12,
   page: route.query.page || undefined,
 }));
 
-// Fetch collection with items from Sanity
 const { data: collectionData, error } = await useFetch(() => `/api/collections/${slug.value}`, {
   query: collectionQuery,
   watch: [collectionQuery],
@@ -20,9 +18,9 @@ const collection = computed(() => {
   if (!collectionData.value?.collection) return null;
   const c = collectionData.value.collection;
   return {
-    _id: c._id,
+    id: c.id,
     name: c.name,
-    slug: c.slug?.current || c.slug,
+    slug: c.slug,
     description: c.description,
   };
 });
@@ -30,13 +28,13 @@ const collection = computed(() => {
 const items = computed(() => {
   if (!collectionData.value?.items) return [];
   return collectionData.value.items.map((item: any) => ({
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
@@ -68,19 +66,17 @@ useSeoMeta({
           {{ collection.description }}
         </p>
 
-        <!-- Items Grid -->
         <SharedEmptyState v-if="items.length === 0" title="No items yet" description="This collection is empty." />
-        
+
         <template v-else>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <ItemCard2
               v-for="item in items"
-              :key="item._id"
+              :key="item.id"
               :item="item"
             />
           </div>
 
-          <!-- Pagination -->
           <div v-if="totalPages > 1" class="mt-8 flex items-center justify-center">
             <SharedPagination :route-prefix="`/collection/${slug}`" :total-pages="totalPages" />
           </div>

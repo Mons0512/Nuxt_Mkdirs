@@ -1,39 +1,34 @@
 <script setup lang="ts">
 import { ArrowLeft, FileText } from 'lucide-vue-next';
-import { getSanityImageUrl } from '~/utils/sanity-image';
 
 const route = useRoute();
 const slug = computed(() => route.params.slug as string);
 
-// Fetch blog post from Sanity
 const { data: post, error } = await useFetch(() => `/api/blog/${slug.value}`);
 
-// Computed values for template
 const imageUrl = computed(() => {
-  if (!post.value?.image) return '';
-  return getSanityImageUrl(post.value.image, { width: 1200, height: 675 });
+  return post.value?.image_url || '';
 });
 
 const authorImageUrl = computed(() => {
-  if (!post.value?.author?.image) return '';
-  return getSanityImageUrl(post.value.author.image, { width: 96, height: 96 });
+  return post.value?.author?.image_url || '';
 });
 
 const publishDate = computed(() => {
-  if (!post.value?.publishDate && !post.value?._createdAt) return '';
-  const date = new Date(post.value.publishDate || post.value._createdAt);
+  if (!post.value?.publish_date) return '';
+  const date = new Date(post.value.publish_date);
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 });
 
 const relatedPosts = computed(() => {
-  if (!post.value?.relatedPosts) return [];
-  return post.value.relatedPosts.map((p: any) => ({
-    _id: p._id,
+  if (!post.value?.related_posts) return [];
+  return post.value.related_posts.map((p: any) => ({
+    id: p.id,
     title: p.title,
-    slug: p.slug?.current || p.slug,
+    slug: p.slug,
     excerpt: p.excerpt,
-    image: p.image ? getSanityImageUrl(p.image, { width: 800, height: 400 }) : '',
-    publishedAt: p.publishDate,
+    image: p.image_url || '',
+    publishedAt: p.publish_date,
     author: p.author?.name || '',
     categories: p.categories?.map((c: any) => c.name) || [],
   }));
@@ -49,32 +44,25 @@ useSeoMeta({
   <div class="py-8">
     <LayoutContainer>
       <div v-if="post" class="flex flex-col gap-8">
-        <!-- Content section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Left column -->
           <div class="lg:col-span-2 flex flex-col">
-            <!-- Basic information -->
             <div class="space-y-8">
-              <!-- Blog post image -->
               <div class="group overflow-hidden relative aspect-video rounded-lg transition-all border">
                 <img
                   v-if="imageUrl"
                   :src="imageUrl"
-                  :alt="post.image?.alt || post.title"
+                  :alt="post.title"
                   class="w-full h-full object-cover"
                 />
               </div>
 
-              <!-- Blog post title -->
               <h1 class="text-3xl font-bold">{{ post.title }}</h1>
 
-              <!-- Blog post description -->
               <p class="text-lg text-muted-foreground">{{ post.excerpt }}</p>
             </div>
 
-            <!-- Blog post content -->
             <div class="mt-4">
-              <SanityPortableText v-if="post.body" :blocks="post.body" />
+              <p>{{ post.body }}</p>
             </div>
 
             <div class="flex items-center justify-start mt-16">
@@ -87,10 +75,8 @@ useSeoMeta({
             </div>
           </div>
 
-          <!-- Right column (sidebar) -->
           <div>
             <div class="space-y-4 lg:sticky lg:top-24">
-              <!-- Author info -->
               <div class="bg-muted/50 rounded-lg p-6">
                 <h2 class="text-lg font-semibold mb-4">Publisher</h2>
                 <div class="flex items-center gap-4">
@@ -109,27 +95,18 @@ useSeoMeta({
                     </div>
                   </div>
                   <div>
-                    <a
-                      v-if="post.author?.link"
-                      :href="post.author.link"
-                      target="_blank"
-                      class="font-medium link-underline"
-                    >
-                      {{ post.author.name }}
-                    </a>
-                    <span v-else class="font-medium">{{ post.author?.name }}</span>
+                    <span class="font-medium">{{ post.author?.name }}</span>
                     <p class="text-sm text-muted-foreground">{{ publishDate }}</p>
                   </div>
                 </div>
               </div>
 
-              <!-- Categories -->
               <div v-if="post.categories?.length" class="bg-muted/50 rounded-lg p-6">
                 <h2 class="text-lg font-semibold mb-4">Categories</h2>
                 <ul class="flex flex-wrap gap-4">
-                  <li v-for="category in post.categories" :key="category._id">
+                  <li v-for="category in post.categories" :key="category.id">
                     <NuxtLink
-                      :to="`/blog/category/${category.slug?.current || category.slug}`"
+                      :to="`/blog/category/${category.slug}`"
                       class="text-sm link-underline"
                     >
                       {{ category.name }}
@@ -141,7 +118,6 @@ useSeoMeta({
           </div>
         </div>
 
-        <!-- Footer section shows related posts -->
         <div v-if="relatedPosts.length > 0" class="flex flex-col gap-8 mt-8">
           <div class="flex items-center gap-2">
             <FileText class="w-4 h-4 text-indigo-500" />

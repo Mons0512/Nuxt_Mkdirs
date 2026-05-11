@@ -1,58 +1,35 @@
-import { sanityFetch } from '../utils/sanity';
-import { itemSimpleFields } from '../utils/sanity-queries';
+import { supabase } from '../utils/supabase';
+import { getUserSubmissions } from '../utils/db/items';
 
-const SUBMISSIONS_PER_PAGE = 10;
-
-/**
- * Get user submissions
- */
 export default defineEventHandler(async (event) => {
-  // Get current user from session
-  const sessionToken = getCookie(event, 'auth-token');
-  
-  if (!sessionToken) {
+  const token = getCookie(event, 'sb-access-token');
+
+  if (!token) {
     throw createError({
       statusCode: 401,
       message: 'Unauthorized',
     });
   }
 
-  let sessionData;
-  try {
-    sessionData = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf-8'));
-  } catch {
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
     throw createError({
       statusCode: 401,
       message: 'Invalid session',
     });
   }
 
-  const userId = sessionData.id;
   const query = getQuery(event);
-  const currentPage = Number(query.page) || 1;
-
-  // Build queries
-  const offsetStart = (currentPage - 1) * SUBMISSIONS_PER_PAGE;
-  const offsetEnd = offsetStart + SUBMISSIONS_PER_PAGE;
-
-  const countQuery = `count(*[_type == "item" && defined(slug.current) && submitter._ref == $userId])`;
-  const dataQuery = `*[_type == "item" && defined(slug.current) && submitter._ref == $userId] | order(_createdAt desc) [$offsetStart...$offsetEnd] {
-    ${itemSimpleFields}
-  }`;
+  const page = Number(query.page) || 1;
 
   try {
-    const [totalCount, submissions] = await Promise.all([
-      sanityFetch<number>(countQuery, { userId }),
-      sanityFetch<any[]>(dataQuery, { userId, offsetStart, offsetEnd }),
-    ]);
-
-    const totalPages = Math.ceil(totalCount / SUBMISSIONS_PER_PAGE);
+    const { submissions, total } = await getUserSubmissions(supabase, user.id, page);
 
     return {
       submissions,
-      totalCount,
-      totalPages,
-      currentPage,
+      totalCount: total,
+      totalPages: Math.ceil(total / 10),
+      currentPage: page,
     };
   } catch (error) {
     console.error('submissions fetch error:', error);

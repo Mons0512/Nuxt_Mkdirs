@@ -1,6 +1,6 @@
-/**
- * Get single blog post by slug
- */
+import { supabase } from '../../utils/supabase';
+import { getBlogPostBySlug } from '../../utils/db/blog-posts';
+
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug');
 
@@ -12,52 +12,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get blog post with full details
-    const postQuery = `*[_type == "blogPost" && slug.current == $slug][0] {
-      _id,
-      _createdAt,
-      title,
-      slug,
-      excerpt,
-      body,
-      featured,
-      image {
-        ...,
-        alt,
-        "blurDataURL": asset->metadata.lqip,
-      },
-      publishDate,
-      author->{
-        _id,
-        name,
-        link,
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        }
-      },
-      categories[]->{
-        _id,
-        name,
-        slug
-      },
-      "relatedPosts": *[_type == "blogPost" && slug.current != $slug && defined(publishDate)] | order(publishDate desc) [0...3] {
-        _id,
-        _createdAt,
-        title,
-        slug,
-        excerpt,
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        publishDate,
-        author->,
-        categories[]->,
-      }
-    }`;
-
-    const post = await sanityFetch<any>(postQuery, { slug });
+    const post = await getBlogPostBySlug(supabase, slug);
 
     if (!post) {
       throw createError({

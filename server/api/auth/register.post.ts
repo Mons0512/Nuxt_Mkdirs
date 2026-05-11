@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { uuid } from '@sanity/uuid';
+import { supabase } from '../../utils/supabase';
 
 const RegisterSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -7,13 +7,9 @@ const RegisterSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-/**
- * Register a new user
- */
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  // Validate input
   const validatedFields = RegisterSchema.safeParse(body);
   if (!validatedFields.success) {
     throw createError({
@@ -24,53 +20,37 @@ export default defineEventHandler(async (event) => {
 
   const { name, email, password } = validatedFields.data;
 
-  // Check if user already exists
-  const existingUser = await getUserByEmail(email);
-  if (existingUser) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name,
+      },
+    },
+  });
+
+  if (error) {
     throw createError({
       statusCode: 400,
-      message: 'Email already in use',
+      message: error.message,
     });
   }
 
-  // Hash password
-  const hashedPassword = await hashPassword(password);
-
-  // Create user in Sanity
-  try {
-    const user = await sanityClient.create({
-      _type: 'user',
-      _id: `user.${uuid()}`,
+  if (data.user) {
+    await supabase.from('users').upsert({
+      id: data.user.id,
+      email: data.user.email,
       name,
-      email,
-      password: hashedPassword,
       role: 'USER',
-      emailVerified: null,
-    });
-
-    // Generate verification token
-    const token = uuid();
-    const expires = new Date(Date.now() + 3600 * 1000); // 1 hour
-
-    await sanityClient.create({
-      _type: 'verificationToken',
-      identifier: email,
-      token,
-      expires: expires.toISOString(),
-    });
-
-    // Send verification email
-    await sendVerificationEmail(email, token);
-
-    return {
-      success: true,
-      message: 'Confirmation email sent!',
-    };
-  } catch (error) {
-    console.error('Registration error:', error);
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to create account',
+      email_verified: data.user.email_confirmed_at ? new Date().toISOString() : null,
     });
   }
+
+  return {
+    success: true,
+    message: data.user?.email_confirmed_at 
+      ? 'Account created successfully!' 
+      : 'Confirmation email sent! Please check your email.',
+  };
 });

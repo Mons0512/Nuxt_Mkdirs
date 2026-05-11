@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Check, Zap, Star } from 'lucide-vue-next';
-import { getSanityImageUrl } from '~/utils/sanity-image';
 
 const route = useRoute();
 const itemId = computed(() => route.params.id as string);
@@ -12,7 +11,7 @@ const steps = [
   { title: 'Publish', description: 'Publish your product' },
 ];
 
-// Fetch item from Sanity
+// Fetch item from Supabase
 const { data: item, error } = await useFetch('/api/item', {
   query: { id: itemId },
 });
@@ -67,11 +66,11 @@ function normalizePlanId(planId: unknown): 'free' | 'pro' | 'sponsor' {
   return 'free';
 }
 
-const selectedPlan = ref<'free' | 'pro' | 'sponsor'>(normalizePlanId(item.value?.pricePlan));
+const selectedPlan = ref<'free' | 'pro' | 'sponsor'>(normalizePlanId(item.value?.price_plan));
 const isProcessing = ref(false);
 
 // Free plan status
-const freePlanStatus = computed(() => item.value?.freePlanStatus || 'submitting');
+const freePlanStatus = computed(() => item.value?.free_plan_status || 'submitting');
 
 // Handle plan selection
 async function handleSelectPlan(planId: string) {
@@ -141,8 +140,7 @@ const freeButtonText = computed(() => {
 
 // Computed image URL
 const imageUrl = computed(() => {
-  if (!item.value?.image) return '';
-  return getSanityImageUrl(item.value.image, { width: 400, height: 225 });
+  return item.value?.image_url || '';
 });
 
 useSeoMeta({

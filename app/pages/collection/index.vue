@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import { getSanityImageUrl } from '~/utils/sanity-image';
-
 const route = useRoute();
 
-// Reactive query params
 const collectionsQuery = computed(() => ({
   limit: 12,
   page: route.query.page || undefined,
 }));
 
-// Fetch collections from Sanity
 const { data: collectionsData } = await useFetch('/api/collections', {
   query: collectionsQuery,
   watch: [collectionsQuery],
@@ -18,12 +14,12 @@ const { data: collectionsData } = await useFetch('/api/collections', {
 const collections = computed(() => {
   if (!collectionsData.value?.collections) return [];
   return collectionsData.value.collections.map((c: any) => ({
-    _id: c._id,
+    id: c.id,
     name: c.name,
-    slug: c.slug?.current || c.slug,
+    slug: c.slug,
     description: c.description,
-    image: c.image ? getSanityImageUrl(c.image, { width: 400, height: 300 }) : '',
-    itemCount: c.itemCount || 0,
+    image: c.image_url || '',
+    itemCount: c.item_count || 0,
   }));
 });
 
@@ -37,7 +33,6 @@ useSeoMeta({
 
 <template>
   <div class="mb-16">
-    <!-- Header -->
     <div class="mt-8">
       <div class="w-full flex flex-col items-center justify-center gap-8">
         <SharedHeaderSection
@@ -47,7 +42,6 @@ useSeoMeta({
       </div>
     </div>
 
-    <!-- Collections Grid -->
     <LayoutContainer class="mt-8">
       <SharedEmptyState v-if="collections.length === 0" />
 
@@ -55,7 +49,7 @@ useSeoMeta({
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <NuxtLink
             v-for="collection in collections"
-            :key="collection._id"
+            :key="collection.id"
             :to="`/collection/${collection.slug}`"
             class="group flex flex-col rounded-lg border bg-card hover:bg-accent transition-colors overflow-hidden"
           >

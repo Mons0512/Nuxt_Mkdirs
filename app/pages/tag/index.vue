@@ -1,26 +1,25 @@
 <script setup lang="ts">
 const route = useRoute();
 
-// Fetch tags from Sanity
 const { data: tagsData } = await useFetch('/api/tags');
 
 const tags = computed(() => {
   if (!tagsData.value) return [];
   return tagsData.value.map((tag: any) => ({
-    _id: tag._id,
+    id: tag.id,
     name: tag.name,
-    slug: tag.slug?.current || tag.slug,
+    slug: tag.slug,
     itemCount: 0,
   }));
 });
 
-// Reactive query params for items API
 const itemsQuery = computed(() => ({
   limit: 12,
+  tag: route.query.tag || undefined,
+  sort: route.query.sort || undefined,
   page: route.query.page || undefined,
 }));
 
-// Fetch items from Sanity
 const { data: itemsData } = await useFetch('/api/items', {
   query: itemsQuery,
   watch: [itemsQuery],
@@ -29,13 +28,13 @@ const { data: itemsData } = await useFetch('/api/items', {
 const items = computed(() => {
   if (!itemsData.value?.items) return [];
   return itemsData.value.items.map((item: any) => ({
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
@@ -44,20 +43,19 @@ const items = computed(() => {
 
 const totalPages = computed(() => itemsData.value?.pagination?.totalPages || 1);
 
-// Fetch sponsor item from Sanity
 const { data: sponsorItemData } = await useFetch('/api/items/sponsor');
 
 const sponsorItem = computed(() => {
   if (!sponsorItemData.value) return null;
   const item = sponsorItemData.value;
   return {
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
@@ -98,17 +96,17 @@ useSeoMeta({
           <!-- First 2 items -->
           <ItemCard2
             v-for="item in items.slice(0, 2)"
-            :key="item._id"
+            :key="item.id"
             :item="item"
           />
-          
+
           <!-- Sponsor card at position 3 -->
           <ItemSponsorItemCard v-if="sponsorItem" :item="sponsorItem" />
-          
+
           <!-- Rest of items -->
           <ItemCard2
             v-for="item in items.slice(2)"
-            :key="item._id"
+            :key="item.id"
             :item="item"
           />
         </div>

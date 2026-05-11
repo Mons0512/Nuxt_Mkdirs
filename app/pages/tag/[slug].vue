@@ -2,26 +2,23 @@
 const route = useRoute();
 const slug = computed(() => route.params.slug as string);
 
-// Fetch all tags from Sanity
 const { data: tagsData } = await useFetch('/api/tags');
 
 const tags = computed(() => {
   if (!tagsData.value) return [];
   return tagsData.value.map((tag: any) => ({
-    _id: tag._id,
+    id: tag.id,
     name: tag.name,
-    slug: tag.slug?.current || tag.slug,
+    slug: tag.slug,
     itemCount: 0,
   }));
 });
 
-// Reactive query params
 const tagQuery = computed(() => ({
   limit: 12,
   page: route.query.page || undefined,
 }));
 
-// Fetch tag with items from Sanity
 const { data: tagData, error } = await useFetch(() => `/api/tags/${slug.value}`, {
   query: tagQuery,
   watch: [tagQuery],
@@ -31,9 +28,9 @@ const currentTag = computed(() => {
   if (!tagData.value?.tag) return null;
   const t = tagData.value.tag;
   return {
-    _id: t._id,
+    id: t.id,
     name: t.name,
-    slug: t.slug?.current || t.slug,
+    slug: t.slug,
     description: t.description,
   };
 });
@@ -41,13 +38,13 @@ const currentTag = computed(() => {
 const items = computed(() => {
   if (!tagData.value?.items) return [];
   return tagData.value.items.map((item: any) => ({
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
@@ -64,38 +61,32 @@ useSeoMeta({
 
 <template>
   <div class="mb-16">
-    <!-- Header -->
     <div class="mt-8">
       <div class="w-full flex flex-col items-center justify-center gap-8">
         <SharedHeaderSection
           label="Tag"
-          title="Explore by tags"
+          :title="`Explore items tagged with ${currentTag.value?.name || 'this tag'}`"
         />
 
-        <!-- Tag Filter -->
         <div class="w-full">
           <TagFilter :tags="tags" />
         </div>
       </div>
     </div>
 
-    <!-- Results -->
-    <LayoutContainer class="mt-4">
-      <!-- Empty state -->
+    <LayoutContainer class="mt-8">
       <SharedEmptyState v-if="items.length === 0" />
 
-      <!-- Items grid -->
       <template v-else>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <ItemCard2
             v-for="item in items"
-            :key="item._id"
+            :key="item.id"
             :item="item"
           />
         </div>
 
-        <!-- Pagination -->
-        <div class="mt-8 flex items-center justify-center">
+        <div v-if="totalPages > 1" class="mt-8 flex justify-center">
           <SharedPagination :route-prefix="`/tag/${slug}`" :total-pages="totalPages" />
         </div>
       </template>

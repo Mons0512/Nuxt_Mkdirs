@@ -1,51 +1,36 @@
 import { z } from 'zod';
-import { sanityClient } from '../../utils/sanity';
-import { getUserByIdWithAccounts } from '../../utils/data/user';
+import { supabase } from '../../utils/supabase';
 
 const SettingsSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
+  image: z.string().optional(),
   link: z.string().optional(),
-  password: z.string().optional(),
-  newPassword: z.string().min(6, 'Password must be at least 6 characters').optional(),
+  password: z.string().min(1, 'Password is required').optional(),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters').optional(),
 });
 
-/**
- * Update user settings
- */
 export default defineEventHandler(async (event) => {
-  // Get current user from session
-  const sessionToken = getCookie(event, 'auth-token');
-  
-  if (!sessionToken) {
+  const token = getCookie(event, 'sb-access-token');
+
+  if (!token) {
     throw createError({
       statusCode: 401,
       message: 'Unauthorized',
     });
   }
 
-  let sessionData;
-  try {
-    sessionData = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf-8'));
-  } catch {
+  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+  if (userError || !user) {
     throw createError({
       statusCode: 401,
       message: 'Invalid session',
     });
   }
 
-  // Get user from database (with accounts to check OAuth status)
-  const user = await getUserByIdWithAccounts(sessionData.id);
-  if (!user) {
-    throw createError({
-      statusCode: 404,
-      message: 'User not found',
-    });
-  }
-
-  // Parse and validate body
   const body = await readBody(event);
   const validatedFields = SettingsSchema.safeParse(body);
-  
+
   if (!validatedFields.success) {
     throw createError({
       statusCode: 400,
@@ -53,75 +38,64 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { name, link, password, newPassword } = validatedFields.data;
+  const { name, image, link, password, newPassword } = validatedFields.data;
 
-  // Check if user is OAuth (has accounts linked)
-  const isOAuth = user.accounts && user.accounts.length > 0;
+  // Update user profile in database
+  const updateData: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (name !== undefined) updateData.name = name;
+  if (image !== undefined) updateData.image = image;
+  if (link !== undefined) updateData.link = link;
 
-  // Prepare update data
-  const updateData: Record<string, any> = {};
-
-  if (name !== undefined) {
-    updateData.name = name;
+  if (Object.keys(updateData).length > 1) {
+    await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', user.id);
   }
 
-  if (link !== undefined) {
-    updateData.link = link;
+  // Update Supabase auth user metadata
+  const authMetadata: Record<string, any> = {};
+  if (name !== undefined) authMetadata.name = name;
+  if (link !== undefined) authMetadata.link = link;
+
+  if (Object.keys(authMetadata).length > 0) {
+    await supabase.auth.updateUser({
+      data: authMetadata,
+    });
   }
 
-  // Handle password change (only for non-OAuth users)
-  if (!isOAuth && password && newPassword) {
-    // Verify current password
-    if (!user.password) {
+  // Handle password change
+  if (password && newPassword) {
+    // Verify current password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password,
+    });
+
+    if (signInError) {
       throw createError({
         statusCode: 400,
-        message: 'Cannot change password for OAuth users',
+        message: 'Current password is incorrect',
       });
     }
 
-    const passwordsMatch = await verifyPassword(password, user.password);
-    if (!passwordsMatch) {
-      return {
-        status: 'error',
-        message: 'Incorrect password!',
-      };
-    }
-
-    // Hash new password
-    updateData.password = await hashPassword(newPassword);
-  }
-
-  // Update user in Sanity
-  try {
-    const updatedUser = await sanityClient
-      .patch(user._id)
-      .set(updateData)
-      .commit();
-
-    // Update session cookie with new data
-    const newSessionData = {
-      ...sessionData,
-      name: updatedUser.name,
-    };
-    
-    const newSessionToken = Buffer.from(JSON.stringify(newSessionData)).toString('base64');
-    setCookie(event, 'auth-token', newSessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+    // Update password
+    const { error: passwordError } = await supabase.auth.updateUser({
+      password: newPassword,
     });
 
-    return {
-      status: 'success',
-      message: 'Account information updated!',
-    };
-  } catch (error) {
-    console.error('settings update error:', error);
-    return {
-      status: 'error',
-      message: 'Failed to update account information!',
-    };
+    if (passwordError) {
+      throw createError({
+        statusCode: 400,
+        message: passwordError.message,
+      });
+    }
   }
+
+  return {
+    success: true,
+    message: 'Account information updated!',
+  };
 });

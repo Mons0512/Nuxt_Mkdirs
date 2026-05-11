@@ -1,6 +1,6 @@
-/**
- * Get single item by ID (passed as query parameter)
- */
+import { supabase } from '../utils/supabase';
+import { getItemById } from '../utils/db/items';
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const id = query.id as string;
@@ -13,46 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const groqQuery = `*[_type == "item" && _id == $id][0] {
-      _id,
-      _createdAt,
-      name,
-      slug,
-      description,
-      introduction,
-      link,
-      featured,
-      pricePlan,
-      freePlanStatus,
-      proPlanStatus,
-      sponsorPlanStatus,
-      publishDate,
-      icon {
-        ...,
-        "blurDataURL": asset->metadata.lqip,
-      },
-      image {
-        ...,
-        "blurDataURL": asset->metadata.lqip,
-      },
-      categories[]->{
-        _id,
-        name,
-        slug
-      },
-      tags[]->{
-        _id,
-        name,
-        slug
-      },
-      submitter->{
-        _id,
-        name,
-        email
-      }
-    }`;
-
-    const item = await sanityFetch<any>(groqQuery, { id });
+    const item = await getItemById(supabase, id);
 
     if (!item) {
       throw createError({

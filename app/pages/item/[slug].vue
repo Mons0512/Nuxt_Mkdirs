@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { Globe, Hash, LayoutGrid, ArrowLeft } from 'lucide-vue-next';
-import { getSanityImageUrl, getSanityIconUrl } from '~/utils/sanity-image';
 
 const route = useRoute();
 const slug = computed(() => route.params.slug as string);
 
-// Fetch item from API
 const { data: item, error } = await useFetch(`/api/items/${slug.value}`);
 
-// Format date
-function formatDate(dateString: string | undefined) {
+function formatDate(dateString: string | undefined | null) {
   if (!dateString) return '';
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -18,19 +15,14 @@ function formatDate(dateString: string | undefined) {
   });
 }
 
-// Get image URL
 const imageUrl = computed(() => {
-  if (!item.value?.image) return '';
-  return getSanityImageUrl(item.value.image, { width: 800, height: 450 });
+  return item.value?.image_url || '';
 });
 
-// Get icon URL
 const iconUrl = computed(() => {
-  if (!item.value?.icon) return '';
-  return getSanityIconUrl(item.value.icon, 32);
+  return item.value?.icon_url || '';
 });
 
-// Get website hostname
 const websiteHostname = computed(() => {
   if (!item.value?.link) return '';
   try {
@@ -40,12 +32,10 @@ const websiteHostname = computed(() => {
   }
 });
 
-// Get item link (affiliate or regular)
 const itemLink = computed(() => {
-  return item.value?.affiliateLink || item.value?.link || '#';
+  return item.value?.affiliate_link || item.value?.link || '#';
 });
 
-// Related items
 const relatedItems = computed(() => item.value?.related || []);
 
 useSeoMeta({
@@ -57,17 +47,14 @@ useSeoMeta({
 <template>
   <LayoutContainer class="py-8">
     <div v-if="item" class="flex flex-col gap-8">
-      <!-- Header section -->
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <!-- Left column -->
         <div class="lg:col-span-3 gap-8 flex flex-col">
-          <!-- Breadcrumb -->
           <nav class="flex items-center gap-2 text-sm text-muted-foreground">
             <NuxtLink to="/" class="hover:text-foreground">Home</NuxtLink>
             <span>/</span>
-            <NuxtLink 
-              v-if="item.categories?.[0]" 
-              :to="`/category/${item.categories[0].slug?.current}`"
+            <NuxtLink
+              v-if="item.categories?.[0]"
+              :to="`/category/${item.categories[0].slug}`"
               class="hover:text-foreground"
             >
               {{ item.categories[0].name }}
@@ -76,7 +63,6 @@ useSeoMeta({
             <span class="text-foreground">{{ item.name }}</span>
           </nav>
 
-          <!-- Icon + Name + Description -->
           <div class="flex flex-1 items-center">
             <div class="flex flex-col gap-8">
               <div class="flex w-full items-center gap-4">
@@ -101,7 +87,6 @@ useSeoMeta({
             </div>
           </div>
 
-          <!-- Action buttons -->
           <div class="flex gap-4">
             <a :href="itemLink" target="_blank" rel="noopener noreferrer">
               <UiButton size="lg" class="group flex items-center gap-2">
@@ -112,7 +97,6 @@ useSeoMeta({
           </div>
         </div>
 
-        <!-- Right column - Image -->
         <div class="lg:col-span-2">
           <div class="relative group overflow-hidden rounded-lg aspect-video">
             <a :href="itemLink" target="_blank" rel="noopener noreferrer" class="relative block w-full h-full">
@@ -135,15 +119,12 @@ useSeoMeta({
         </div>
       </div>
 
-      <!-- Content section -->
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <!-- Left column - Introduction -->
         <div class="lg:col-span-3 flex flex-col">
           <div v-if="item.introduction" class="bg-muted/50 rounded-lg p-6 mr-0 lg:mr-8">
             <h2 class="text-lg font-semibold mb-4">Introduction</h2>
             <div class="prose prose-sm dark:prose-invert max-w-none">
-              <SanityPortableText v-if="Array.isArray(item.introduction)" :blocks="item.introduction" />
-              <p v-else>{{ item.introduction }}</p>
+              <p>{{ item.introduction }}</p>
             </div>
           </div>
 
@@ -155,10 +136,8 @@ useSeoMeta({
           </div>
         </div>
 
-        <!-- Right column - Info cards -->
         <div class="lg:col-span-2">
           <div class="flex flex-col space-y-4">
-            <!-- Information -->
             <div class="bg-muted/50 rounded-lg p-6">
               <h2 class="text-lg font-semibold mb-4">Information</h2>
               <ul class="space-y-4 text-sm">
@@ -179,18 +158,17 @@ useSeoMeta({
                 </li>
                 <li class="flex justify-between">
                   <span class="text-muted-foreground">Published date</span>
-                  <span class="font-medium">{{ formatDate(item.publishDate || item._createdAt) }}</span>
+                  <span class="font-medium">{{ formatDate(item.publish_date) }}</span>
                 </li>
               </ul>
             </div>
 
-            <!-- Categories -->
             <div v-if="item.categories?.length" class="bg-muted/50 rounded-lg p-6">
               <h2 class="text-lg font-semibold mb-4">Categories</h2>
               <ul class="flex flex-wrap gap-4">
-                <li v-for="category in item.categories" :key="category._id">
+                <li v-for="category in item.categories" :key="category.id">
                   <NuxtLink
-                    :to="`/category/${category.slug?.current}`"
+                    :to="`/category/${category.slug}`"
                     class="text-sm link-underline"
                   >
                     {{ category.name }}
@@ -199,13 +177,12 @@ useSeoMeta({
               </ul>
             </div>
 
-            <!-- Tags -->
             <div v-if="item.tags?.length" class="bg-muted/50 rounded-lg p-6">
               <h2 class="text-lg font-semibold mb-4">Tags</h2>
               <ul class="flex flex-wrap gap-4">
-                <li v-for="tag in item.tags" :key="tag._id">
+                <li v-for="tag in item.tags" :key="tag.id">
                   <NuxtLink
-                    :to="`/tag/${tag.slug?.current}`"
+                    :to="`/tag/${tag.slug}`"
                     class="text-sm link-underline flex items-center justify-center space-x-0.5 group"
                   >
                     <Hash class="w-3 h-3 text-muted-foreground icon-scale" />
@@ -218,7 +195,6 @@ useSeoMeta({
         </div>
       </div>
 
-      <!-- Related items -->
       <div v-if="relatedItems.length > 0" class="flex flex-col gap-4 mt-8">
         <div class="flex items-center gap-2">
           <LayoutGrid class="w-4 h-4 text-indigo-500" />
@@ -232,7 +208,6 @@ useSeoMeta({
       </div>
     </div>
 
-    <!-- Not found -->
     <SharedEmptyState
       v-else-if="error"
       title="Item not found"

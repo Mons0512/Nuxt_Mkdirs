@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { MailX, CheckCircle, AlertCircle } from 'lucide-vue-next';
+import { useSeo } from '~/composables/useSeo';
 
 const route = useRoute();
 const email = computed(() => route.query.email as string || '');

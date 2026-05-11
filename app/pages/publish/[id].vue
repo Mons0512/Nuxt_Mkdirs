@@ -1,37 +1,29 @@
 <script setup lang="ts">
 import { Check, ExternalLink, Share2, PartyPopper } from 'lucide-vue-next';
-import { getSanityImageUrl } from '~/utils/sanity-image';
 
 const route = useRoute();
 const config = useRuntimeConfig();
 const itemId = computed(() => route.params.id as string);
 
-// Check if coming from successful payment
 const showConfetti = computed(() => route.query.pay === 'success');
 
-// Stepper steps
 const steps = [
   { title: 'Details', description: 'Enter product information' },
   { title: 'Payment', description: 'Select pricing plan' },
   { title: 'Publish', description: 'Publish your product' },
 ];
 
-// Fetch item from Sanity
 const { data: item, error } = await useFetch('/api/item', {
   query: { id: itemId },
 });
 
-// Computed image URL
 const imageUrl = computed(() => {
-  if (!item.value?.image) return '';
-  return getSanityImageUrl(item.value.image, { width: 400, height: 225 });
+  return item.value?.image_url || '';
 });
 
-// Item URL
 const itemUrl = computed(() => {
   if (!item.value?.slug) return '';
-  const slug = item.value.slug?.current || item.value.slug;
-  return `${config.public.appUrl}/item/${slug}`;
+  return `${config.public.appUrl}/item/${item.value.slug}`;
 });
 
 // Publishing state
@@ -128,7 +120,7 @@ useSeoMeta({
             <p class="text-muted-foreground mb-8">Your product is now live and visible to everyone.</p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-              <NuxtLink :to="`/item/${item.slug?.current || item.slug}`">
+              <NuxtLink :to="`/item/${item.slug}`">
                 <UiButton class="gap-2">
                   <ExternalLink class="w-4 h-4" />
                   View Product

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BellRing, Loader2 } from 'lucide-vue-next';
+import { useAuth } from '~/composables/useAuth';
 
 definePageMeta({
   layout: 'protected',

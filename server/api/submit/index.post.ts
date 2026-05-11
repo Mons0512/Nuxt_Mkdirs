@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { uuid } from '@sanity/uuid';
+import { supabase } from '../../utils/supabase';
+import { uploadBase64Image } from '../../utils/storage';
 
 const SubmitSchema = z.object({
   link: z.string().url('Invalid URL'),
@@ -13,14 +14,10 @@ const SubmitSchema = z.object({
   pricePlan: z.enum(['free', 'pro', 'sponsor']).default('free'),
 });
 
-/**
- * Submit a new item
- */
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
   const body = await readBody(event);
 
-  // Validate input
   const validatedFields = SubmitSchema.safeParse(body);
   if (!validatedFields.success) {
     throw createError({
@@ -31,124 +28,112 @@ export default defineEventHandler(async (event) => {
 
   const data = validatedFields.data;
 
-  // Get user from session
-  const sessionToken = getCookie(event, 'auth-token');
-  if (!sessionToken) {
+  const token = getCookie(event, 'sb-access-token');
+  if (!token) {
     throw createError({
       statusCode: 401,
       message: 'Please login to submit',
     });
   }
 
-  let userId: string;
-  try {
-    const sessionData = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf-8'));
-    userId = sessionData.id;
-  } catch {
+  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+  if (userError || !user) {
     throw createError({
       statusCode: 401,
       message: 'Invalid session',
     });
   }
 
-  try {
-    // Generate slug from name
-    const slug = data.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+  const slug = data.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 
-    // Build item data
-    const itemData: Record<string, any> = {
-      _type: 'item',
-      _id: `item.${uuid()}`,
-      name: data.name,
-      slug: { _type: 'slug', current: slug },
-      link: data.link,
-      description: data.description,
-      introduction: data.introduction,
-      pricePlan: data.pricePlan,
-      categories: data.categories.map((id) => ({
-        _type: 'reference',
-        _ref: id,
-        _key: uuid(),
-      })),
-      tags: data.tags?.map((id) => ({
-        _type: 'reference',
-        _ref: id,
-        _key: uuid(),
-      })),
-      freePlanStatus: data.pricePlan === 'free' ? 'submitting' : undefined,
-      proPlanStatus: data.pricePlan === 'pro' ? 'submitting' : undefined,
-      sponsorPlanStatus: data.pricePlan === 'sponsor' ? 'submitting' : undefined,
-    };
+  let imageUrl: string | undefined;
+  let iconUrl: string | undefined;
 
-    // Add image if provided
-    if (data.image) {
-      itemData.image = {
-        _type: 'image',
-        alt: `image of ${data.name}`,
-        asset: {
-          _type: 'reference',
-          _ref: data.image,
-        },
-      };
+  if (data.image) {
+    const result = await uploadBase64Image(data.image, 'images');
+    if (result.url) {
+      imageUrl = result.url;
     }
+  }
 
-    // Add icon if provided
-    if (data.icon) {
-      itemData.icon = {
-        _type: 'image',
-        alt: `icon of ${data.name}`,
-        asset: {
-          _type: 'reference',
-          _ref: data.icon,
-        },
-      };
+  if (data.icon) {
+    const result = await uploadBase64Image(data.icon, 'icons');
+    if (result.url) {
+      iconUrl = result.url;
     }
+  }
 
-    // Add submitter reference
-    itemData.submitter = {
-      _type: 'reference',
-      _ref: userId,
-    };
+  const itemData: any = {
+    name: data.name,
+    slug,
+    link: data.link,
+    description: data.description,
+    introduction: data.introduction,
+    image_url: imageUrl,
+    image_alt: `image of ${data.name}`,
+    icon_url: iconUrl,
+    icon_alt: `icon of ${data.name}`,
+    price_plan: data.pricePlan,
+    free_plan_status: data.pricePlan === 'free' ? 'submitting' : null,
+    pro_plan_status: data.pricePlan === 'pro' ? 'submitting' : null,
+    sponsor_plan_status: data.pricePlan === 'sponsor' ? 'submitting' : null,
+    submitter_id: user.id,
+  };
 
-    // Create item in Sanity
-    const item = await sanityClient.create(itemData as any);
+  const { data: item, error: itemError } = await supabase
+    .from('items')
+    .insert(itemData)
+    .select()
+    .single();
 
-    // If paid plan, create checkout session
-    if (data.pricePlan !== 'free') {
-      const priceId = data.pricePlan === 'pro'
-        ? config.public.stripeProPriceId
-        : config.public.stripeSponsorPriceId;
-
-      if (priceId) {
-        const session = await createCheckoutSession({
-          priceId,
-          userId,
-          itemId: item._id,
-          successUrl: `${config.public.appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${config.public.appUrl}/payment/cancel`,
-        });
-
-        return {
-          success: true,
-          item,
-          checkoutUrl: session.url,
-        };
-      }
-    }
-
-    return {
-      success: true,
-      item,
-      message: 'Submission received! We will review it shortly.',
-    };
-  } catch (error) {
-    console.error('Submit error:', error);
+  if (itemError) {
+    console.error('Submit error:', itemError);
     throw createError({
       statusCode: 500,
       message: 'Failed to submit item',
     });
   }
+
+  if (data.categories?.length) {
+    await supabase.from('item_categories').insert(
+      data.categories.map(cid => ({ item_id: item.id, category_id: cid }))
+    );
+  }
+
+  if (data.tags?.length) {
+    await supabase.from('item_tags').insert(
+      data.tags.map(tid => ({ item_id: item.id, tag_id: tid }))
+    );
+  }
+
+  if (data.pricePlan !== 'free') {
+    const priceId = data.pricePlan === 'pro'
+      ? config.public.stripeProPriceId
+      : config.public.stripeSponsorPriceId;
+
+    if (priceId) {
+      const session = await createCheckoutSession({
+        priceId,
+        userId: user.id,
+        itemId: item.id,
+        successUrl: `${config.public.appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${config.public.appUrl}/payment/cancel`,
+      });
+
+      return {
+        success: true,
+        item,
+        checkoutUrl: session.url,
+      };
+    }
+  }
+
+  return {
+    success: true,
+    item,
+    message: 'Submission received! We will review it shortly.',
+  };
 });

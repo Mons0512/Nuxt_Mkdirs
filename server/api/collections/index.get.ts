@@ -1,42 +1,20 @@
-/**
- * Get collections list from Sanity
- */
+import { supabase } from '../../utils/supabase';
+import { getCollections } from '../../utils/db/collections';
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 12;
 
   try {
-    // Count query
-    const countQuery = `count(*[_type == "collection" && defined(slug.current)])`;
-    const total = await sanityFetch<number>(countQuery);
-
-    // Data query
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const dataQuery = `*[_type == "collection" && defined(slug.current)] 
-      | order(priority desc, _createdAt desc) [${start}...${end}] {
-        _id,
-        _createdAt,
-        name,
-        slug,
-        description,
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        "itemCount": count(*[_type == "item" && references(^._id)])
-      }`;
-
-    const collections = await sanityFetch<any[]>(dataQuery);
-
+    const collections = await getCollections(supabase);
     return {
       collections: collections || [],
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: collections.length,
+        totalPages: Math.ceil(collections.length / limit),
       },
     };
   } catch (error) {

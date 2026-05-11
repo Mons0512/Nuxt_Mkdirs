@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
 const route = useRoute();
 const router = useRouter();
 
-const currentSlug = computed(() => route.params.slug as string || '');
+const currentSlug = computed(() => (route.query.category as string) || (route.params.slug as string) || '');
 const selectedSort = computed(() => (route.query.sort as string) || '');
 
 const sortOptions = [
@@ -32,8 +32,7 @@ function handleSortChange(value: string) {
   }
   delete newQuery.page;
   
-  const path = currentSlug.value ? `${props.urlPrefix}/${currentSlug.value}` : props.urlPrefix;
-  router.push({ path, query: newQuery });
+  router.push({ path: props.urlPrefix, query: newQuery });
 }
 </script>
 
@@ -46,7 +45,7 @@ function handleSortChange(value: string) {
         <div class="flex-1 overflow-x-auto pb-4">
           <ul class="flex gap-x-2">
             <li>
-              <NuxtLink :to="urlPrefix">
+              <NuxtLink :to="{ path: urlPrefix, query: { ...route.query, category: undefined } }">
                 <UiButton
                   :variant="!currentSlug ? 'default' : 'outline'"
                   size="sm"
@@ -56,8 +55,8 @@ function handleSortChange(value: string) {
                 </UiButton>
               </NuxtLink>
             </li>
-            <li v-for="category in categories" :key="category._id">
-              <NuxtLink :to="`${urlPrefix}/${category.slug}`">
+            <li v-for="category in categories" :key="category.id">
+              <NuxtLink :to="{ path: urlPrefix, query: { ...route.query, category: category.slug } }">
                 <UiButton
                   :variant="currentSlug === category.slug ? 'default' : 'outline'"
                   size="sm"
@@ -88,7 +87,7 @@ function handleSortChange(value: string) {
       <div class="overflow-x-auto pb-2">
         <ul class="flex gap-x-2">
           <li>
-            <NuxtLink :to="urlPrefix">
+            <NuxtLink :to="{ path: urlPrefix, query: { ...route.query, category: undefined } }">
               <UiButton
                 :variant="!currentSlug ? 'default' : 'outline'"
                 size="sm"
@@ -98,8 +97,8 @@ function handleSortChange(value: string) {
               </UiButton>
             </NuxtLink>
           </li>
-          <li v-for="category in categories" :key="category._id">
-            <NuxtLink :to="`${urlPrefix}/${category.slug}`">
+          <li v-for="category in categories" :key="category.id">
+            <NuxtLink :to="{ path: urlPrefix, query: { ...route.query, category: category.slug } }">
               <UiButton
                 :variant="currentSlug === category.slug ? 'default' : 'outline'"
                 size="sm"

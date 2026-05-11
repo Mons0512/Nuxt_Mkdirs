@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { uploadImage } from '../../utils/storage';
 
 const requestSchema = z.object({
   url: z.string().url('Invalid URL format'),
@@ -6,41 +7,35 @@ const requestSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   try {
-    // Parse and validate request body
     const body = await readBody(event);
     const { url } = requestSchema.parse(body);
 
-    // Step 1: Scrape website
     const scrapedData = await scrapeWebsite(url);
-
-    // Step 2: Use AI to extract metadata
     const aiMetadata = await extractWebsiteMetadata(scrapedData.html, url);
 
-    // Step 3: Upload images to Sanity (if available)
-    let iconAsset = null;
-    let imageAsset = null;
+    let iconUrl = null;
+    let imageUrl = null;
 
-    // Try to upload favicon as icon
     if (scrapedData.favicon) {
       try {
         const iconBuffer = await downloadImage(scrapedData.favicon);
-        iconAsset = await uploadImageToSanity(iconBuffer, 'icon.png');
+        const result = await uploadImage(iconBuffer, 'images', 'icons');
+        iconUrl = result.url;
       } catch (error) {
         console.warn('Failed to upload favicon:', error);
       }
     }
 
-    // Try to upload OG image
     if (scrapedData.ogImage) {
       try {
         const imageBuffer = await downloadImage(scrapedData.ogImage);
-        imageAsset = await uploadImageToSanity(imageBuffer, 'image.jpg');
+        const result = await uploadImage(imageBuffer, 'images', 'items');
+        imageUrl = result.url;
       } catch (error) {
         console.warn('Failed to upload OG image:', error);
       }
     }
 
-    // Return combined results
     return {
       success: true,
       data: {
@@ -49,19 +44,13 @@ export default defineEventHandler(async (event) => {
         introduction: aiMetadata.introduction,
         category: aiMetadata.category,
         tags: aiMetadata.tags,
-        icon: iconAsset ? {
-          _id: iconAsset._id,
-          url: iconAsset.url,
-        } : null,
-        image: imageAsset ? {
-          _id: imageAsset._id,
-          url: imageAsset.url,
-        } : null,
+        icon: iconUrl,
+        image: imageUrl,
       },
     };
   } catch (error: any) {
     console.error('AI analyze error:', error);
-    
+
     if (error instanceof z.ZodError) {
       throw createError({
         statusCode: 400,

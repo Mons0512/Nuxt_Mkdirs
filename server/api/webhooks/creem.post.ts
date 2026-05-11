@@ -1,18 +1,5 @@
-/**
- * Creem webhook handler
- * Handles payment events from Creem
- * POST /api/webhooks/creem
- * 
- * Webhook events:
- * - checkout.completed: Payment completed
- * - subscription.active: Subscription activated
- * - subscription.paid: Subscription payment received
- * - subscription.canceled: Subscription canceled
- * - subscription.expired: Subscription expired
- * - subscription.paused: Subscription paused
- * - refund.created: Refund created
- * - dispute.created: Dispute created
- */
+import { supabaseAdmin } from '../../utils/supabase';
+
 export default defineEventHandler(async (event) => {
   const body = await readRawBody(event);
   const signature = getHeader(event, 'creem-signature');
@@ -26,60 +13,69 @@ export default defineEventHandler(async (event) => {
 
   try {
     await handleCreemWebhook(body, signature, {
-      // Handle checkout completion
       onCheckoutCompleted: async (data) => {
         console.log('Creem checkout completed:', data.id);
-        
+
         const userId = data.metadata?.userId;
         const itemId = data.metadata?.itemId;
         const pricePlan = data.metadata?.pricePlan || (data.product?.name?.toLowerCase().includes('sponsor') ? 'sponsor' : 'pro');
         const customerEmail = data.customer?.email;
         const customerName = data.customer?.name;
         const orderId = data.order?.id;
-        
+
         if (userId && itemId) {
           console.log(`Processing Creem payment for user ${userId}, item ${itemId}, plan: ${pricePlan}`);
-          
+
           try {
-            // 1. Create order record in Sanity
-            const orderResult = await sanityClient.create({
-              _type: 'order',
-              user: {
-                _type: 'reference',
-                _ref: userId,
-              },
-              item: {
-                _type: 'reference',
-                _ref: itemId,
-              },
-              status: 'success',
-              provider: 'creem',
-              externalOrderId: orderId,
-              date: new Date().toISOString(),
-            });
-            console.log('Order created:', orderResult._id);
-
-            // 2. Update item status
-            const itemResult = await sanityClient
-              .patch(itemId)
-              .set({
-                paid: true,
-                featured: true,
-                pricePlan: pricePlan,
-                sponsor: pricePlan === 'sponsor',
-                proPlanStatus: pricePlan === 'pro' ? 'success' : 'submitting',
-                sponsorPlanStatus: pricePlan === 'sponsor' ? 'success' : 'submitting',
-                order: {
-                  _type: 'reference',
-                  _ref: orderResult._id,
-                },
+            const { data: orderResult, error: orderError } = await supabaseAdmin
+              .from('orders')
+              .insert({
+                user_id: userId,
+                item_id: itemId,
+                status: 'success',
+                provider: 'creem',
+                external_order_id: orderId,
               })
-              .commit();
-            console.log('Item updated:', itemResult._id);
+              .select()
+              .single();
 
-            // 3. Send confirmation email (optional)
+            if (orderError) {
+              console.error('Order creation error:', orderError);
+              return;
+            }
+            console.log('Order created:', orderResult.id);
+
+            const updateData: any = {
+              paid: true,
+              featured: true,
+              price_plan: pricePlan,
+              sponsor: pricePlan === 'sponsor',
+            };
+
+            if (pricePlan === 'pro') {
+              updateData.pro_plan_status = 'success';
+            } else if (pricePlan === 'sponsor') {
+              updateData.sponsor_plan_status = 'success';
+            }
+
+            if (orderResult) {
+              updateData.order_id = orderResult.id;
+            }
+
+            const { data: itemResult, error: itemError } = await supabaseAdmin
+              .from('items')
+              .update(updateData)
+              .eq('id', itemId)
+              .select()
+              .single();
+
+            if (itemError) {
+              console.error('Item update error:', itemError);
+              return;
+            }
+            console.log('Item updated:', itemResult.id);
+
             if (customerEmail) {
-              // TODO: Implement email sending
               console.log(`Should send confirmation email to ${customerEmail}`);
             }
           } catch (err) {
@@ -88,31 +84,22 @@ export default defineEventHandler(async (event) => {
         }
       },
 
-      // Grant access when subscription becomes active/trialing/paid
       onGrantAccess: async (context) => {
         const { reason, customer, product, metadata } = context;
         const userId = metadata?.userId;
-        
+
         console.log(`Granting access (${reason}) to user ${userId}`);
         console.log(`Customer: ${customer?.email}, Product: ${product?.name}`);
-        
-        // TODO: Update user subscription status in database
-        // Example: await updateUserSubscription(userId, { active: true });
       },
 
-      // Revoke access when subscription is paused/expired
       onRevokeAccess: async (context) => {
         const { reason, customer, product, metadata } = context;
         const userId = metadata?.userId;
-        
+
         console.log(`Revoking access (${reason}) from user ${userId}`);
         console.log(`Customer: ${customer?.email}, Product: ${product?.name}`);
-        
-        // TODO: Update user subscription status in database
-        // Example: await updateUserSubscription(userId, { active: false });
       },
 
-      // Individual subscription events
       onSubscriptionActive: async (data) => {
         console.log('Subscription active:', data.id);
       },
@@ -129,15 +116,12 @@ export default defineEventHandler(async (event) => {
         console.log('Subscription expired:', data.id);
       },
 
-      // Refund and dispute events
       onRefundCreated: async (data) => {
         console.log('Refund created:', data.id);
-        // TODO: Handle refund logic
       },
 
       onDisputeCreated: async (data) => {
         console.log('Dispute created:', data.id);
-        // TODO: Handle dispute logic
       },
     });
 

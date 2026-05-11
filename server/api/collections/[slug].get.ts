@@ -1,6 +1,7 @@
-/**
- * Get single collection by slug with its items
- */
+import { supabase } from '../../utils/supabase';
+import { getCollectionBySlug } from '../../utils/db/collections';
+import { getItems } from '../../utils/db/items';
+
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug');
   const query = getQuery(event);
@@ -15,20 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get collection
-    const collectionQuery = `*[_type == "collection" && slug.current == $slug][0] {
-      _id,
-      _createdAt,
-      name,
-      slug,
-      description,
-      image {
-        ...,
-        "blurDataURL": asset->metadata.lqip,
-      }
-    }`;
-
-    const collection = await sanityFetch<any>(collectionQuery, { slug });
+    const collection = await getCollectionBySlug(supabase, slug);
 
     if (!collection) {
       throw createError({
@@ -37,43 +25,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Count items in collection
-    const countQuery = `count(*[_type == "item" && defined(slug.current) 
-      && forceHidden != true && sponsor != true
-      && references($collectionId)])`;
-    const total = await sanityFetch<number>(countQuery, { collectionId: collection._id });
-
-    // Get items in collection
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const itemsQuery = `*[_type == "item" && defined(slug.current) 
-      && forceHidden != true && sponsor != true
-      && references($collectionId)] 
-      | order(coalesce(featured, false) desc, _createdAt desc) [${start}...${end}] {
-        _id,
-        _createdAt,
-        name,
-        slug,
-        description,
-        link,
-        featured,
-        icon {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        categories[]->,
-        tags[]->,
-      }`;
-
-    const items = await sanityFetch<any[]>(itemsQuery, { collectionId: collection._id });
+    const { items, total } = await getItems(supabase, {
+      page,
+      limit,
+    });
 
     return {
       collection,
-      items: items || [],
+      items,
       pagination: {
         page,
         limit,

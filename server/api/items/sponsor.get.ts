@@ -1,36 +1,15 @@
-/**
- * Get sponsor item from Sanity (first one)
- */
-export default defineEventHandler(async () => {
-  try {
-    const groqQuery = `*[_type == "item" && defined(slug.current) 
-      && defined(publishDate)
-      && sponsor == true] 
-      | order(_createdAt desc) [0] {
-        _id,
-        _createdAt,
-        name,
-        slug,
-        description,
-        link,
-        featured,
-        sponsor,
-        icon {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        categories[]->,
-        tags[]->,
-      }`;
+import { supabase } from '../../utils/supabase';
+import { getSponsorItems } from '../../utils/db/items';
 
-    const item = await sanityFetch<any>(groqQuery);
-    return item || null;
+export default defineEventHandler(async (event) => {
+  try {
+    const items = await getSponsorItems(supabase);
+    return items || [];
   } catch (error) {
-    console.error('Error fetching sponsor item:', error);
-    return null;
+    console.error('Error fetching sponsor items:', error);
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to fetch sponsor items',
+    });
   }
 });

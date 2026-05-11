@@ -1,20 +1,9 @@
-/**
- * Get all categories from Sanity
- */
+import { supabase } from '../../utils/supabase';
+import { getCategories } from '../../utils/db/categories';
+
 export default defineEventHandler(async () => {
   try {
-    const query = `*[_type == "category" && defined(slug.current)] 
-      | order(priority desc) {
-        _id,
-        name,
-        slug,
-        description,
-        icon,
-        priority
-      }`;
-
-    const categories = await sanityFetch<any[]>(query);
-
+    const categories = await getCategories(supabase);
     return categories || [];
   } catch (error) {
     console.error('Error fetching categories:', error);

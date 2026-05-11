@@ -1,26 +1,25 @@
 <script setup lang="ts">
 const route = useRoute();
 
-// Fetch categories from Sanity
 const { data: categoriesData } = await useFetch('/api/categories');
 
 const categories = computed(() => {
   if (!categoriesData.value) return [];
   return categoriesData.value.map((cat: any) => ({
-    _id: cat._id,
+    id: cat.id,
     name: cat.name,
-    slug: cat.slug?.current || cat.slug,
+    slug: cat.slug,
     itemCount: 0,
   }));
 });
 
-// Reactive query params for items API
 const itemsQuery = computed(() => ({
   limit: 12,
+  category: route.query.category || undefined,
+  sort: route.query.sort || undefined,
   page: route.query.page || undefined,
 }));
 
-// Fetch items from Sanity
 const { data: itemsData } = await useFetch('/api/items', {
   query: itemsQuery,
   watch: [itemsQuery],
@@ -29,40 +28,39 @@ const { data: itemsData } = await useFetch('/api/items', {
 const items = computed(() => {
   if (!itemsData.value?.items) return [];
   return itemsData.value.items.map((item: any) => ({
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
     categories: item.categories?.map((c: any) => ({
-      _id: c._id,
+      id: c.id,
       name: c.name,
-      slug: c.slug?.current || c.slug,
+      slug: c.slug,
     })) || [],
   }));
 });
 
 const totalPages = computed(() => itemsData.value?.pagination?.totalPages || 1);
 
-// Fetch sponsor item from Sanity
 const { data: sponsorItemData } = await useFetch('/api/items/sponsor');
 
 const sponsorItem = computed(() => {
   if (!sponsorItemData.value) return null;
   const item = sponsorItemData.value;
   return {
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
@@ -103,17 +101,17 @@ useSeoMeta({
           <!-- First 2 items -->
           <ItemCard2
             v-for="item in items.slice(0, 2)"
-            :key="item._id"
+            :key="item.id"
             :item="item"
           />
-          
+
           <!-- Sponsor card at position 3 -->
           <ItemSponsorItemCard v-if="sponsorItem" :item="sponsorItem" />
-          
+
           <!-- Rest of items -->
           <ItemCard2
             v-for="item in items.slice(2)"
-            :key="item._id"
+            :key="item.id"
             :item="item"
           />
         </div>

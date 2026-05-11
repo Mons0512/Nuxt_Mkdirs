@@ -1,18 +1,14 @@
 import { z } from 'zod';
+import { supabaseAdmin } from '../../utils/supabase';
+import { unsubscribe as unsubscribeSubscriber } from '../../utils/db/subscribers';
 
 const UnsubscribeSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
 
-/**
- * Newsletter unsubscribe endpoint
- * 
- * Updates contact status in Resend Audience
- */
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  // Validate input
   const validatedFields = UnsubscribeSchema.safeParse(body);
   if (!validatedFields.success) {
     throw createError({
@@ -24,60 +20,40 @@ export default defineEventHandler(async (event) => {
   const { email } = validatedFields.data;
   const config = useRuntimeConfig();
 
-  // Check if Resend is configured
-  if (!config.resendApiKey || !config.resendAudienceId) {
-    return {
-      success: true,
-      message: 'You have been unsubscribed.',
-    };
+  if (config.resendApiKey && config.resendAudienceId) {
+    try {
+      const contactsResult = await resend.contacts.list({
+        audienceId: config.resendAudienceId,
+      });
+
+      if (contactsResult.error) {
+        throw new Error(contactsResult.error.message);
+      }
+
+      const contact = contactsResult.data?.data?.find(
+        (c: any) => c.email === email
+      );
+
+      if (contact) {
+        await resend.contacts.update({
+          id: contact.id,
+          audienceId: config.resendAudienceId,
+          unsubscribed: true,
+        });
+      }
+    } catch (error: any) {
+      console.error('Newsletter unsubscribe error:', error);
+    }
   }
 
   try {
-    // Get contact ID first
-    const contactsResult = await resend.contacts.list({
-      audienceId: config.resendAudienceId,
-    });
-
-    if (contactsResult.error) {
-      throw new Error(contactsResult.error.message);
-    }
-
-    // Find the contact by email
-    const contact = contactsResult.data?.data?.find(
-      (c: any) => c.email === email
-    );
-
-    if (!contact) {
-      // Contact not found, but still return success
-      return {
-        success: true,
-        message: 'You have been unsubscribed.',
-      };
-    }
-
-    // Update contact to unsubscribed
-    const updateResult = await resend.contacts.update({
-      id: contact.id,
-      audienceId: config.resendAudienceId,
-      unsubscribed: true,
-    });
-
-    console.log('Newsletter unsubscribe result:', updateResult);
-
-    if (updateResult.error) {
-      throw new Error(updateResult.error.message);
-    }
-
-    return {
-      success: true,
-      message: 'You have been unsubscribed.',
-    };
-  } catch (error: any) {
-    console.error('Newsletter unsubscribe error:', error);
-    
-    throw createError({
-      statusCode: 500,
-      message: error.message || 'Failed to unsubscribe. Please try again.',
-    });
+    await unsubscribeSubscriber(supabaseAdmin, email);
+  } catch (error) {
+    console.error('Local unsubscribe error:', error);
   }
+
+  return {
+    success: true,
+    message: 'You have been unsubscribed.',
+  };
 });

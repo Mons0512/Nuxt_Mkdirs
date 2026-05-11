@@ -1,6 +1,6 @@
-/**
- * Get blog posts list from Sanity
- */
+import { supabase } from '../../utils/supabase';
+import { getBlogPosts } from '../../utils/db/blog-posts';
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const page = Number(query.page) || 1;
@@ -8,41 +8,11 @@ export default defineEventHandler(async (event) => {
   const category = query.category as string | undefined;
 
   try {
-    // Build query
-    let baseQuery = `*[_type == "blogPost" && defined(slug.current) && defined(publishDate)`;
-    const params: Record<string, any> = {};
-
-    if (category) {
-      baseQuery += ` && $category in categories[]->slug.current`;
-      params.category = category;
-    }
-
-    baseQuery += `]`;
-
-    // Count query
-    const countQuery = baseQuery.replace('*[', 'count(*[') + ')';
-    const total = await sanityFetch<number>(countQuery, params);
-
-    // Data query
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const dataQuery = `${baseQuery} | order(publishDate desc) [${start}...${end}] {
-      _id,
-      _createdAt,
-      title,
-      slug,
-      excerpt,
-      featured,
-      image {
-        ...,
-        "blurDataURL": asset->metadata.lqip,
-      },
-      publishDate,
-      author->,
-      categories[]->,
-    }`;
-
-    const posts = await sanityFetch<any[]>(dataQuery, params);
+    const { posts, total } = await getBlogPosts(supabase, {
+      page,
+      limit,
+      category,
+    });
 
     return {
       posts: posts || [],

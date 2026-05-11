@@ -1,37 +1,12 @@
-/**
- * Get featured items from Sanity
- */
+import { supabase } from '../../utils/supabase';
+import { getFeaturedItems } from '../../utils/db/items';
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const count = Number(query.count) || 6;
 
   try {
-    const groqQuery = `*[_type == "item" && defined(slug.current) 
-      && defined(publishDate)
-      && forceHidden != true
-      && sponsor != true
-      && featured == true] 
-      | order(_createdAt desc) [0...$count] {
-        _id,
-        _createdAt,
-        name,
-        slug,
-        description,
-        link,
-        featured,
-        icon {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        image {
-          ...,
-          "blurDataURL": asset->metadata.lqip,
-        },
-        categories[]->,
-        tags[]->,
-      }`;
-
-    const items = await sanityFetch<any[]>(groqQuery, { count });
+    const items = await getFeaturedItems(supabase, count);
     return items || [];
   } catch (error) {
     console.error('Error fetching featured items:', error);

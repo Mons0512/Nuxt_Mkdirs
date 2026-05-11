@@ -1,42 +1,45 @@
 <script setup lang="ts">
 import { Edit, Globe } from 'lucide-vue-next';
-import type { ItemInfo } from '~/types';
-import { getSanityImageUrl } from '~/utils/sanity-image';
 
 interface Props {
-  item: ItemInfo;
+  item: {
+    id?: string;
+    name?: string;
+    slug?: string;
+    link?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    image?: string | null;
+    featured?: boolean;
+    price_plan?: string;
+    free_plan_status?: string;
+    pro_plan_status?: string;
+    sponsor_plan_status?: string;
+    publish_date?: string;
+    created_at?: string;
+  };
 }
 
 const props = defineProps<Props>();
 
-// Get image URL from Sanity
 const imageUrl = computed(() => {
-  const img = props.item.image as any;
-  if (img?.asset) {
-    return getSanityImageUrl(img, { width: 800, height: 450 });
-  }
-  return typeof img === 'string' ? img : '';
+  return props.item.image || '';
 });
 
-// Check if item is publishable
 const publishable = computed(() => {
   const item = props.item;
-  // Free plan: must be approved
-  if (item.pricePlan === 'free') {
-    return item.freePlanStatus === 'approved';
+  if (item.price_plan === 'free') {
+    return item.free_plan_status === 'approved';
   }
-  // Pro plan: must be approved
-  if (item.pricePlan === 'pro') {
-    return item.proPlanStatus === 'approved';
+  if (item.price_plan === 'pro') {
+    return item.pro_plan_status === 'approved';
   }
-  // Sponsor plan: must be approved
-  if (item.pricePlan === 'sponsor') {
-    return item.sponsorPlanStatus === 'approved';
+  if (item.price_plan === 'sponsor') {
+    return item.sponsor_plan_status === 'approved';
   }
   return false;
 });
 
-// Format date
 function formatDate(dateString?: string) {
   if (!dateString) return '';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -46,21 +49,19 @@ function formatDate(dateString?: string) {
   });
 }
 
-// Get status display
-function getStatus(item: ItemInfo) {
-  if (item.pricePlan === 'free') {
-    return item.freePlanStatus || 'draft';
+function getStatus(item: typeof props.item) {
+  if (item.price_plan === 'free') {
+    return item.free_plan_status || 'draft';
   }
-  if (item.pricePlan === 'pro') {
-    return item.proPlanStatus || 'draft';
+  if (item.price_plan === 'pro') {
+    return item.pro_plan_status || 'draft';
   }
-  if (item.pricePlan === 'sponsor') {
-    return item.sponsorPlanStatus || 'draft';
+  if (item.price_plan === 'sponsor') {
+    return item.sponsor_plan_status || 'draft';
   }
   return 'draft';
 }
 
-// Get status color
 function getStatusColor(status: string) {
   switch (status) {
     case 'approved':
@@ -78,7 +79,6 @@ function getStatusColor(status: string) {
 <template>
   <UiCard class="flex-grow flex items-center p-4">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-8 w-full">
-      <!-- Left column - Image -->
       <div class="md:col-span-2 flex flex-col">
         <div class="relative group overflow-hidden rounded-lg aspect-video bg-muted">
           <img
@@ -93,28 +93,24 @@ function getStatusColor(status: string) {
         </div>
       </div>
 
-      <!-- Right column - Details -->
       <div class="md:col-span-3 flex flex-col justify-between">
         <div class="space-y-4">
-          <!-- Title -->
           <NuxtLink
-            v-if="publishable && item.publishDate"
+            v-if="publishable && item.publish_date"
             :to="`/item/${item.slug}`"
           >
             <h3 class="text-2xl inline-block hover:underline">{{ item.name }}</h3>
           </NuxtLink>
           <h3 v-else class="text-2xl inline-block">{{ item.name }}</h3>
 
-          <!-- Description -->
           <p class="text-muted-foreground line-clamp-2 text-balance leading-relaxed">
             {{ item.description }}
           </p>
 
-          <!-- Plan & Status -->
           <div class="grid grid-cols-2 gap-4 text-sm pt-2">
             <div class="flex items-center gap-2">
               <span class="text-muted-foreground">Plan:</span>
-              <span class="capitalize">{{ item.pricePlan || 'free' }}</span>
+              <span class="capitalize">{{ item.price_plan || 'free' }}</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-muted-foreground">Status:</span>
@@ -124,30 +120,26 @@ function getStatusColor(status: string) {
             </div>
           </div>
 
-          <!-- Dates -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm pt-2">
             <div class="flex items-center gap-2">
               <span class="text-muted-foreground">Publish Date:</span>
-              <span v-if="item.publishDate" class="font-medium">
-                {{ formatDate(item.publishDate) }}
+              <span v-if="item.publish_date" class="font-medium">
+                {{ formatDate(item.publish_date) }}
               </span>
               <span v-else class="font-semibold">Not published</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-muted-foreground">Created Date:</span>
-              <span>{{ formatDate(item._createdAt) }}</span>
+              <span>{{ formatDate(item.created_at) }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Actions -->
         <div class="flex flex-wrap gap-4 mt-6">
-          <!-- Publish/Unpublish button -->
-          <DashboardPublishButton v-if="!item.publishDate" :item="item" />
-          <DashboardUnpublishButton v-else-if="publishable && item.publishDate" :item="item" />
+          <DashboardPublishButton v-if="!item.publish_date" :item="item" />
+          <DashboardUnpublishButton v-else-if="publishable && item.publish_date" :item="item" />
 
-          <!-- Edit button -->
-          <NuxtLink :to="`/edit/${item._id}`">
+          <NuxtLink :to="`/edit/${item.id}`">
             <UiButton variant="outline" class="group overflow-hidden">
               <Edit class="w-4 h-4 mr-2" />
               Edit

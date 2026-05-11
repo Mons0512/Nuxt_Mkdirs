@@ -1,30 +1,34 @@
 <script setup lang="ts">
 import { ArrowRight, ArrowUpRight, Hash, Sparkles } from 'lucide-vue-next';
-import type { ItemInfo } from '~/types';
 import { cn } from '~/utils';
-import { getSanityImageUrl } from '~/utils/sanity-image';
 
 interface Props {
-  item: ItemInfo;
-  compact?: boolean; // compact mode: only show image, hover to show details
+  item: {
+    id?: string;
+    name?: string;
+    slug?: string;
+    link?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    image?: string | null;
+    featured?: boolean;
+    tags?: Array<{ id?: string; name: string; slug?: string }>;
+    categories?: Array<{ id?: string; name: string; slug?: string }>;
+    category?: string;
+  };
+  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   compact: false,
 });
 
-// Get image URL from Sanity image or string
 const imageUrl = computed(() => {
-  const img = props.item.image as any;
-  if (img?.asset) {
-    return getSanityImageUrl(img, { width: 800, height: 450 });
-  }
-  return typeof img === 'string' ? img : '';
+  return props.item.image || '';
 });
 </script>
 
 <template>
-  <!-- Compact mode: image only with hover overlay -->
   <a
     v-if="compact"
     :href="item.link"
@@ -43,7 +47,6 @@ const imageUrl = computed(() => {
         <span class="text-5xl font-bold text-muted-foreground/30">{{ item.name?.charAt(0)?.toUpperCase() || '?' }}</span>
       </div>
 
-      <!-- Sponsor badge (always visible) -->
       <div class="absolute top-2 left-2">
         <span class="inline-flex items-center gap-1 text-xs font-medium text-white bg-primary/90 backdrop-blur-sm rounded-full px-2 py-1">
           <Sparkles class="size-3" />
@@ -51,7 +54,6 @@ const imageUrl = computed(() => {
         </span>
       </div>
 
-      <!-- Hover overlay with details -->
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
         <h3 class="font-semibold text-lg text-white truncate mb-1">
           {{ item.name }}
@@ -67,7 +69,6 @@ const imageUrl = computed(() => {
     </div>
   </a>
 
-  <!-- Full mode: same style as ItemCard2 with background image -->
   <div
     v-else
     :class="cn(
@@ -75,13 +76,11 @@ const imageUrl = computed(() => {
       'duration-300 shadow-sm hover:shadow-lg transition-all group'
     )"
   >
-    <!-- Background Image -->
     <div
       v-if="imageUrl"
       class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
       :style="{ backgroundImage: `url(${imageUrl})` }"
     />
-    <!-- Gradient Overlay for readability -->
     <div
       :class="cn(
         'absolute inset-0 transition-opacity duration-300',
@@ -91,11 +90,8 @@ const imageUrl = computed(() => {
       )"
     />
 
-    <!-- Content -->
     <div class="relative z-10 flex flex-col justify-between h-full p-6">
-      <!-- Top section -->
       <div class="flex flex-col gap-3">
-        <!-- Sponsored badge -->
         <div class="flex items-center justify-between">
           <span class="inline-flex items-center gap-1 text-xs font-medium text-white bg-primary/90 backdrop-blur-sm rounded-full px-2 py-1">
             <Sparkles class="size-3" />
@@ -113,7 +109,6 @@ const imageUrl = computed(() => {
           </a>
         </div>
 
-        <!-- Name -->
         <NuxtLink :to="`/item/${item.slug}`" class="min-w-0">
           <h3
             :class="cn(
@@ -125,11 +120,10 @@ const imageUrl = computed(() => {
           </h3>
         </NuxtLink>
 
-        <!-- Categories (if available) -->
         <div v-if="item.categories && item.categories.length > 0" class="flex flex-wrap gap-2 items-center">
           <NuxtLink
             v-for="category in item.categories"
-            :key="category._id"
+            :key="category.id || category.name"
             :to="`/category/${category.slug}`"
             :class="cn(
               'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-2 py-1 h-6',
@@ -143,9 +137,7 @@ const imageUrl = computed(() => {
         </div>
       </div>
 
-      <!-- Bottom section: Description + Tags -->
       <div class="mt-auto pt-4">
-        <!-- Description -->
         <NuxtLink :to="`/item/${item.slug}`" class="block cursor-pointer">
           <p
             :class="cn(
@@ -157,17 +149,16 @@ const imageUrl = computed(() => {
           </p>
         </NuxtLink>
 
-        <!-- Tags -->
         <div v-if="item.tags && item.tags.length > 0" class="mt-3 flex flex-wrap gap-2 items-center">
           <NuxtLink
             v-for="(tag, index) in item.tags.slice(0, 3)"
             :key="index"
-            :to="`/tag/${typeof tag === 'string' ? tag.toLowerCase().replace(/[\s/]+/g, '-') : tag}`"
+            :to="`/tag/${(tag.slug || tag.name).toLowerCase().replace(/[\s/]+/g, '-')}`"
             class="flex items-center justify-center space-x-0.5 group/tag"
           >
             <Hash :class="cn('w-3 h-3 icon-scale', imageUrl ? 'text-white/70' : 'text-muted-foreground')" />
             <span :class="cn('text-sm link-underline', imageUrl ? 'text-white/70' : 'text-muted-foreground')">
-              {{ typeof tag === 'string' ? tag : tag }}
+              {{ tag.name }}
             </span>
           </NuxtLink>
           <span v-if="item.tags.length > 3" :class="cn('text-sm px-1', imageUrl ? 'text-white/60' : 'text-muted-foreground')">

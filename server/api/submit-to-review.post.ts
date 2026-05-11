@@ -1,7 +1,5 @@
-/**
- * Submit item to review (for Free plan)
- * Changes status from 'submitting' to 'pending'
- */
+import { supabaseAdmin } from '../utils/supabase';
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const id = body?.id;
@@ -13,25 +11,24 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  try {
-    // Update item status to pending (waiting for admin review)
-    const result = await sanityClient
-      .patch(id)
-      .set({
-        freePlanStatus: 'pending',
-      })
-      .commit();
+  const { error } = await supabaseAdmin
+    .from('items')
+    .update({
+      free_plan_status: 'pending',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
 
-    return {
-      success: true,
-      item: result,
-      message: 'Successfully submitted to review',
-    };
-  } catch (error) {
+  if (error) {
     console.error('Submit to review error:', error);
     throw createError({
       statusCode: 500,
       message: 'Failed to submit to review',
     });
   }
+
+  return {
+    success: true,
+    message: 'Successfully submitted to review',
+  };
 });

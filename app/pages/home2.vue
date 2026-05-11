@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const route = useRoute();
 
-// Reactive query params for items API
 const itemsQuery = computed(() => ({
   limit: 12,
   q: route.query.q || undefined,
@@ -12,7 +11,6 @@ const itemsQuery = computed(() => ({
   page: route.query.page || undefined,
 }));
 
-// Fetch items from Sanity - reactive to URL changes
 const { data: itemsData } = await useFetch('/api/items', {
   query: itemsQuery,
   watch: [itemsQuery],
@@ -21,13 +19,13 @@ const { data: itemsData } = await useFetch('/api/items', {
 const items = computed(() => {
   if (!itemsData.value?.items) return [];
   return itemsData.value.items.map((item: any) => ({
-    _id: item._id,
+    id: item.id,
     name: item.name,
-    slug: item.slug?.current || item.slug,
+    slug: item.slug,
     link: item.link,
     description: item.description,
-    icon: item.icon,
-    image: item.image,
+    icon: item.icon_url,
+    image: item.image_url,
     featured: item.featured,
     tags: item.tags?.map((t: any) => t.name) || [],
     category: item.categories?.[0]?.name || '',
@@ -36,38 +34,33 @@ const items = computed(() => {
 
 const totalPages = computed(() => itemsData.value?.pagination?.totalPages || 1);
 
-// Fetch groups from Sanity
 const { data: groupsData } = await useFetch('/api/groups');
 
-// Fetch categories from Sanity
 const { data: categoriesData } = await useFetch('/api/categories');
 
-// Groups (if available)
 const groups = computed(() => {
   if (!groupsData.value || groupsData.value.length === 0) return [];
   return groupsData.value.map((group: any) => ({
-    _id: group._id,
+    id: group.id,
     name: group.name,
-    slug: group.slug?.current || group.slug,
+    slug: group.slug,
     categories: group.categories?.map((cat: any) => ({
-      _id: cat._id,
+      id: cat.id,
       name: cat.name,
-      slug: cat.slug?.current || cat.slug,
+      slug: cat.slug,
     })) || [],
   }));
 });
 
-// Categories (flat list)
 const categories = computed(() => {
   if (!categoriesData.value) return [];
   return categoriesData.value.map((cat: any) => ({
-    _id: cat._id,
+    id: cat.id,
     name: cat.name,
-    slug: cat.slug?.current || cat.slug,
+    slug: cat.slug,
   }));
 });
 
-// Categories options for filter
 const categoryOptions = computed(() => {
   return categories.value.map((cat: any) => ({
     value: cat.slug,
@@ -75,13 +68,12 @@ const categoryOptions = computed(() => {
   }));
 });
 
-// Fetch tags from Sanity
 const { data: tagsData } = await useFetch('/api/tags');
 
 const tags = computed(() => {
   if (!tagsData.value) return [];
   return tagsData.value.map((tag: any) => ({
-    value: tag.slug?.current || tag.slug,
+    value: tag.slug,
     label: tag.name,
   }));
 });
@@ -113,7 +105,7 @@ useSeoMeta({
 
         <!-- Item Grid -->
         <SharedEmptyState v-if="items.length === 0" />
-        
+
         <template v-else>
           <ItemGrid :items="items" />
 
