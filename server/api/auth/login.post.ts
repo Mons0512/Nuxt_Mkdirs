@@ -36,20 +36,14 @@ export default defineEventHandler(async (event) => {
     setAuthCookie(event, data.session.access_token, data.session.refresh_token);
   }
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('name, image, role')
-    .eq('id', data.user.id)
-    .single();
-
   return {
     success: true,
     user: {
       id: data.user.id,
       email: data.user.email,
-      name: profile?.name || data.user.user_metadata?.name,
-      image: profile?.image || data.user.user_metadata?.avatar_url,
-      role: profile?.role || 'USER',
+      name: data.user.user_metadata?.name || data.user.user_metadata?.full_name,
+      image: data.user.user_metadata?.avatar_url,
+      role: data.user.user_metadata?.role || 'USER',
     },
   };
 });

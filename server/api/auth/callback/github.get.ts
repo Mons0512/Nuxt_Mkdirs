@@ -28,21 +28,14 @@ export default defineEventHandler(async (event) => {
   }
 
   if (data.user) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('name, image, role')
-      .eq('id', data.user.id)
-      .single();
-
-    if (!profile) {
-      await supabase.from('users').upsert({
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.user_metadata?.name || data.user.user_metadata?.user_name,
-        image: data.user.user_metadata?.avatar_url,
-        role: 'USER',
-        provider: 'github',
-        provider_id: String(data.user.user_metadata?.sub),
+    // Ensure role is set in user metadata
+    if (!data.user.user_metadata?.role) {
+      await supabase.auth.updateUser({
+        data: {
+          ...data.user.user_metadata,
+          role: 'USER',
+          provider: 'github',
+        },
       });
     }
   }

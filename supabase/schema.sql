@@ -1,76 +1,8 @@
 -- Supabase Database Schema
 -- For Nuxt Mkdirs Navigation Site
 -- Run this SQL in Supabase SQL Editor to create all tables
-
--- ============================================================================
--- USERS TABLE (Extended with role for RLS)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT,
-    email TEXT UNIQUE NOT NULL,
-    email_verified TIMESTAMPTZ,
-    image TEXT,
-    link TEXT,
-    role TEXT DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
-    provider TEXT,
-    provider_id TEXT,
-    password TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================================================
--- OAUTH ACCOUNTS TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS accounts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type TEXT NOT NULL,
-    provider TEXT NOT NULL,
-    provider_account_id TEXT NOT NULL,
-    refresh_token TEXT,
-    access_token TEXT,
-    expires_at BIGINT,
-    token_type TEXT,
-    scope TEXT,
-    id_token TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(provider, provider_account_id)
-);
-
--- ============================================================================
--- VERIFICATION TOKENS TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS verification_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    identifier TEXT NOT NULL,
-    token TEXT NOT NULL UNIQUE,
-    expires TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================================================
--- PASSWORD RESET TOKENS TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    identifier TEXT NOT NULL,
-    token TEXT NOT NULL UNIQUE,
-    expires TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================================================
--- SESSIONS TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_token TEXT UNIQUE NOT NULL,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    expires TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- NOTE: We use Supabase Auth for user management, no separate users table needed
+-- User metadata (role, name, etc.) is stored in auth.users table via user_metadata
 
 -- ============================================================================
 -- GROUPS TABLE (Group of categories)
@@ -154,7 +86,7 @@ CREATE TABLE IF NOT EXISTS items (
     paid BOOLEAN DEFAULT FALSE,
     force_hidden BOOLEAN DEFAULT FALSE,
     note TEXT,
-    submitter_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    submitter_id UUID, -- References auth.users(id)
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -212,7 +144,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     image_url TEXT,
     image_alt TEXT,
     publish_date TIMESTAMPTZ,
-    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    author_id UUID, -- References auth.users(id)
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -240,7 +172,7 @@ CREATE TABLE IF NOT EXISTS blog_post_related (
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL, -- References auth.users(id)
     item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     status TEXT NOT NULL CHECK (status IN ('success', 'failed')),
     payment_provider TEXT,
@@ -297,22 +229,14 @@ CREATE TABLE IF NOT EXISTS settings (
 -- ROW LEVEL SECURITY POLICIES
 -- ============================================================================
 
--- Users table RLS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Public users can view own data" ON users;
-CREATE POLICY "Public users can view own data" ON users FOR SELECT USING (auth.uid() = id);
-DROP POLICY IF EXISTS "Public read for author display" ON users;
-CREATE POLICY "Public read for author display" ON users FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Users can update own data" ON users;
-CREATE POLICY "Users can update own data" ON users FOR UPDATE USING (auth.uid() = id);
-DROP POLICY IF EXISTS "Admins can view all users" ON users;
-CREATE POLICY "Admins can view all users" ON users FOR SELECT USING (
-    auth.uid() = id AND role = 'ADMIN'
-);
-DROP POLICY IF EXISTS "Admins can update all users" ON users;
-CREATE POLICY "Admins can update all users" ON users FOR UPDATE USING (
-    auth.uid() = id AND role = 'ADMIN'
-);
+-- Helper function to check if current user is ADMIN
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN (auth.jwt() ->> 'role' = 'ADMIN') OR 
+           (auth.jwt() ->> 'user_metadata' ->> 'role' = 'ADMIN');
+END;
+$$ LANGUAGE plpgsql;
 
 -- Items table RLS
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
@@ -322,56 +246,44 @@ CREATE POLICY "Anyone can view published items" ON items FOR SELECT USING (
 );
 DROP POLICY IF EXISTS "Users can view own submissions" ON items;
 CREATE POLICY "Users can view own submissions" ON items FOR SELECT USING (
-    submitter_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
+    submitter_id = auth.uid() OR is_admin()
 );
 DROP POLICY IF EXISTS "Authenticated users can create items" ON items;
 CREATE POLICY "Authenticated users can create items" ON items FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 DROP POLICY IF EXISTS "Users can update own items" ON items;
 CREATE POLICY "Users can update own items" ON items FOR UPDATE USING (
-    submitter_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
+    submitter_id = auth.uid() OR is_admin()
 );
 DROP POLICY IF EXISTS "Only admins can delete items" ON items;
-CREATE POLICY "Only admins can delete items" ON items FOR DELETE USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Only admins can delete items" ON items FOR DELETE USING (is_admin());
 
 -- Categories table RLS
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON categories;
 CREATE POLICY "Public read access" ON categories FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage categories" ON categories;
-CREATE POLICY "Admins can manage categories" ON categories FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage categories" ON categories FOR ALL USING (is_admin());
 
 -- Tags table RLS
 ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON tags;
 CREATE POLICY "Public read access" ON tags FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage tags" ON tags;
-CREATE POLICY "Admins can manage tags" ON tags FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage tags" ON tags FOR ALL USING (is_admin());
 
 -- Groups table RLS
 ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON groups;
 CREATE POLICY "Public read access" ON groups FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage groups" ON groups;
-CREATE POLICY "Admins can manage groups" ON groups FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage groups" ON groups FOR ALL USING (is_admin());
 
 -- Collections table RLS
 ALTER TABLE collections ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON collections;
 CREATE POLICY "Public read access" ON collections FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage collections" ON collections;
-CREATE POLICY "Admins can manage collections" ON collections FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage collections" ON collections FOR ALL USING (is_admin());
 
 -- Blog posts table RLS
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
@@ -381,8 +293,7 @@ CREATE POLICY "Anyone can view published posts" ON blog_posts FOR SELECT USING (
 );
 DROP POLICY IF EXISTS "Authors can manage own posts" ON blog_posts;
 CREATE POLICY "Authors can manage own posts" ON blog_posts FOR ALL USING (
-    author_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
+    author_id = auth.uid() OR is_admin()
 );
 
 -- Blog categories table RLS
@@ -390,77 +301,35 @@ ALTER TABLE blog_categories ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON blog_categories;
 CREATE POLICY "Public read access" ON blog_categories FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage blog categories" ON blog_categories;
-CREATE POLICY "Admins can manage blog categories" ON blog_categories FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage blog categories" ON blog_categories FOR ALL USING (is_admin());
 
 -- Subscribers table RLS
 ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public can subscribe" ON subscribers;
 CREATE POLICY "Public can subscribe" ON subscribers FOR INSERT WITH CHECK (true);
-DROP POLICY IF EXISTS "Users can view own subscription" ON subscribers;
-CREATE POLICY "Users can view own subscription" ON subscribers FOR SELECT USING (
-    auth.uid() IS NOT NULL
-);
 DROP POLICY IF EXISTS "Admins can manage subscribers" ON subscribers;
-CREATE POLICY "Admins can manage subscribers" ON subscribers FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage subscribers" ON subscribers FOR ALL USING (is_admin());
 
 -- Orders table RLS
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view own orders" ON orders;
 CREATE POLICY "Users can view own orders" ON orders FOR SELECT USING (user_id = auth.uid());
 DROP POLICY IF EXISTS "Admins can view all orders" ON orders;
-CREATE POLICY "Admins can view all orders" ON orders FOR SELECT USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can view all orders" ON orders FOR SELECT USING (is_admin());
 
 -- Pages table RLS
 ALTER TABLE pages ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON pages;
 CREATE POLICY "Public read access" ON pages FOR SELECT USING (publish_date IS NOT NULL);
 DROP POLICY IF EXISTS "Admins can manage pages" ON pages;
-CREATE POLICY "Admins can manage pages" ON pages FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
-
--- Accounts table RLS (for OAuth)
-ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users can view own accounts" ON accounts;
-CREATE POLICY "Users can view own accounts" ON accounts FOR SELECT USING (auth.uid() = user_id);
-DROP POLICY IF EXISTS "Users can manage own accounts" ON accounts;
-CREATE POLICY "Users can manage own accounts" ON accounts FOR ALL USING (auth.uid() = user_id);
-
--- Sessions table RLS
-ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users can view own sessions" ON sessions;
-CREATE POLICY "Users can view own sessions" ON sessions FOR SELECT USING (auth.uid() = user_id);
-DROP POLICY IF EXISTS "Users can manage own sessions" ON sessions;
-CREATE POLICY "Users can manage own sessions" ON sessions FOR ALL USING (auth.uid() = user_id);
-
--- Verification tokens table RLS
-ALTER TABLE verification_tokens ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Public can view verification tokens" ON verification_tokens;
-CREATE POLICY "Public can view verification tokens" ON verification_tokens FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Public can create verification tokens" ON verification_tokens;
-CREATE POLICY "Public can create verification tokens" ON verification_tokens FOR INSERT WITH CHECK (true);
-
--- Password reset tokens table RLS
-ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Public can view password reset tokens" ON password_reset_tokens;
-CREATE POLICY "Public can view password reset tokens" ON password_reset_tokens FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Public can create password reset tokens" ON password_reset_tokens;
-CREATE POLICY "Public can create password reset tokens" ON password_reset_tokens FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins can manage pages" ON pages FOR ALL USING (is_admin());
 
 -- Settings table RLS
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public can view settings" ON settings;
 CREATE POLICY "Public can view settings" ON settings FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins can manage settings" ON settings;
-CREATE POLICY "Admins can manage settings" ON settings FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'ADMIN')
-);
+CREATE POLICY "Admins can manage settings" ON settings FOR ALL USING (is_admin());
 
 -- ============================================================================
 -- INDEXES FOR PERFORMANCE
@@ -508,10 +377,6 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email);
 CREATE INDEX IF NOT EXISTS idx_subscribers_status ON subscribers(status);
 
--- Users indexes
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(LOWER(email));
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-
 -- Pages indexes
 CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug);
 CREATE INDEX IF NOT EXISTS idx_pages_publish_date ON pages(publish_date) WHERE publish_date IS NOT NULL;
@@ -543,3 +408,6 @@ CREATE INDEX IF NOT EXISTS idx_item_collections_collection ON item_collections(c
 -- 1. Create storage buckets in Supabase Dashboard > Storage
 -- 2. Update your .env file with Supabase credentials
 -- 3. Start building your application
+-- 4. For user management, all data is stored in auth.users user_metadata:
+--    - name, avatar_url, role, etc. can be set via Supabase Auth API
+-- 5. To set a user as ADMIN, update their user_metadata in Supabase Dashboard or via API

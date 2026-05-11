@@ -78,6 +78,29 @@ export function useAuth() {
     navigateTo('/');
   }
 
+  /**
+   * Resend verification email
+   */
+  async function resendVerification(email: string) {
+    const response = await $fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      body: { email },
+    });
+    return response;
+  }
+
+  /**
+   * Get auth error state
+   */
+  const authError = computed(() => useState<string>('auth-error', () => '').value);
+
+  /**
+   * Clear auth error
+   */
+  function clearAuthError() {
+    useState<string>('auth-error', () => '').value = '';
+  }
+
   // Fetch session on mount
   onMounted(() => {
     fetchSession();
@@ -92,5 +115,8 @@ export function useAuth() {
     signInWithProvider,
     signOut,
     fetchSession,
+    resendVerification,
+    authError,
+    clearAuthError,
   };
 }

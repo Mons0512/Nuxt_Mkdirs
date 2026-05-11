@@ -1,5 +1,4 @@
-import { supabaseAdmin } from '../../../utils/supabase';
-import { getCurrentUser } from '../../../utils/auth';
+import { getCurrentUser, getUsers } from '../../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'sb-access-token');
@@ -15,25 +14,15 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 20;
+  const role = query.role as string;
 
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-
-  const { data, count, error: dbError } = await supabaseAdmin
-    .from('users')
-    .select('id, name, email, image, role, created_at', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  if (dbError) {
-    throw createError({ statusCode: 500, message: 'Failed to fetch users' });
-  }
+  const result = await getUsers({ page, limit, role });
 
   return {
-    users: data || [],
-    total: count || 0,
+    users: result.users,
+    total: result.total,
     page,
     limit,
-    totalPages: Math.ceil((count || 0) / limit),
+    totalPages: Math.ceil(result.total / limit),
   };
 });

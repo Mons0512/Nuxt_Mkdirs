@@ -27,28 +27,14 @@ export default defineEventHandler(async (event) => {
       // Set the auth cookies
       setAuthCookie(event, data.session.access_token, data.session.refresh_token);
 
-      // Upsert user to database if not exists
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', data.user.id)
-          .single();
-
-        if (!profile) {
-          await supabase.from('users').upsert({
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.name || data.user.email?.split('@')[0],
+      // Ensure role is set in user metadata
+      if (data.user && !data.user.user_metadata?.role) {
+        await supabase.auth.updateUser({
+          data: {
+            ...data.user.user_metadata,
             role: 'USER',
-            email_verified: data.user.email_confirmed_at ? new Date().toISOString() : null,
-          });
-        } else {
-          // Update email_verified status
-          await supabase.from('users').update({
-            email_verified: data.user.email_confirmed_at ? new Date().toISOString() : null,
-          }).eq('id', data.user.id);
-        }
+          },
+        });
       }
 
       return {
@@ -56,7 +42,7 @@ export default defineEventHandler(async (event) => {
         user: data.user ? {
           id: data.user.id,
           email: data.user.email,
-          name: data.user.user_metadata?.name || data.user.email?.split('@')[0],
+          name: data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0],
         } : null,
       };
     }

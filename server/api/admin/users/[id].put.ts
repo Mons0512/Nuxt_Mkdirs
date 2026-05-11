@@ -1,5 +1,4 @@
-import { supabaseAdmin } from '../../../utils/supabase';
-import { getCurrentUser } from '../../../utils/auth';
+import { getCurrentUser, updateUserRole, getUserById } from '../../../utils/auth';
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'sb-access-token');
@@ -18,16 +17,20 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event);
-  const { data, error: dbError } = await supabaseAdmin
-    .from('users')
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select('id, name, email, image, role')
-    .single();
-
-  if (dbError) {
-    throw createError({ statusCode: 500, message: 'Failed to update user' });
+  
+  // If role is being updated, use our dedicated function
+  if (body.role) {
+    const success = await updateUserRole(id, body.role);
+    if (!success) {
+      throw createError({ statusCode: 500, message: 'Failed to update user role' });
+    }
   }
 
-  return data;
+  // Get updated user and return
+  const updatedUser = await getUserById(id);
+  if (!updatedUser) {
+    throw createError({ statusCode: 404, message: 'User not found' });
+  }
+
+  return updatedUser;
 });

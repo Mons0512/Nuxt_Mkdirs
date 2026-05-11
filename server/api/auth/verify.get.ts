@@ -1,4 +1,5 @@
 import { supabase } from '../../utils/supabase';
+import { setAuthCookie } from '../../utils/supabase';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -13,21 +14,13 @@ export default defineEventHandler(async (event) => {
   }
 
   if (type === 'signup') {
-    const { data, error } = await supabase.auth.verifyOtp({
-      type: 'email_change',
-      token,
-    });
-
-    if (error) {
-      throw createError({
-        statusCode: 400,
-        message: error.message,
-      });
-    }
-
+    // For email verification, we need to extract the email from the token or use a different approach
+    // However, Supabase typically handles this via hash fragment redirect which we handle separately
+    // This endpoint is kept for compatibility
+    
     return {
       success: true,
-      message: 'Email verified successfully',
+      message: 'Email verification received. Please complete the process via the redirect.',
     };
   }
 

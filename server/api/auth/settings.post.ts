@@ -40,24 +40,12 @@ export default defineEventHandler(async (event) => {
 
   const { name, image, link, password, newPassword } = validatedFields.data;
 
-  // Update user profile in database
-  const updateData: Record<string, any> = {
-    updated_at: new Date().toISOString(),
+  // Update Supabase auth user metadata (单一数据源)
+  const authMetadata: Record<string, any> = {
+    ...user.user_metadata,
   };
-  if (name !== undefined) updateData.name = name;
-  if (image !== undefined) updateData.image = image;
-  if (link !== undefined) updateData.link = link;
-
-  if (Object.keys(updateData).length > 1) {
-    await supabase
-      .from('users')
-      .update(updateData)
-      .eq('id', user.id);
-  }
-
-  // Update Supabase auth user metadata
-  const authMetadata: Record<string, any> = {};
   if (name !== undefined) authMetadata.name = name;
+  if (image !== undefined) authMetadata.avatar_url = image;
   if (link !== undefined) authMetadata.link = link;
 
   if (Object.keys(authMetadata).length > 0) {

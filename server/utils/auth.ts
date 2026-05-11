@@ -21,23 +21,13 @@ export async function getCurrentUser(token: string): Promise<AuthResult> {
       return { user: null, error: error?.message || 'Invalid token' };
     }
 
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('users')
-      .select('name, image, role')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Profile fetch error:', profileError);
-    }
-
     return {
       user: {
         id: user.id,
         email: user.email || '',
-        name: profile?.name || user.user_metadata?.name || user.user_metadata?.full_name,
-        image: profile?.image || user.user_metadata?.avatar_url,
-        role: (profile?.role as 'USER' | 'ADMIN') || 'USER',
+        name: user.user_metadata?.name || user.user_metadata?.full_name,
+        image: user.user_metadata?.avatar_url,
+        role: (user.user_metadata?.role as 'USER' | 'ADMIN') || 'USER',
       },
       error: null,
     };
@@ -57,18 +47,15 @@ export async function upsertUserProfile(
   }
 ): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin
-      .from('users')
-      .upsert({
-        id: userId,
-        email: profile.email,
-        name: profile.name,
-        image: profile.image,
-        role: profile.role || 'USER',
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'id',
-      });
+    // Update user metadata instead of database
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      userId,
+      {
+        user_metadata: {
+          ...profile,
+        },
+      }
+    );
 
     if (error) {
       console.error('upsertUserProfile error:', error);
@@ -84,10 +71,24 @@ export async function upsertUserProfile(
 
 export async function updateUserRole(userId: string, role: 'USER' | 'ADMIN'): Promise<boolean> {
   try {
-    const { error } = await supabaseAdmin
-      .from('users')
-      .update({ role, updated_at: new Date().toISOString() })
-      .eq('id', userId);
+    // Get current user
+    const { data: { user }, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    
+    if (getUserError || !user) {
+      console.error('updateUserRole: user not found:', getUserError);
+      return false;
+    }
+
+    // Update role in user metadata
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(
+      userId,
+      {
+        user_metadata: {
+          ...user.user_metadata,
+          role: role,
+        },
+      }
+    );
 
     if (error) {
       console.error('updateUserRole error:', error);
@@ -98,6 +99,68 @@ export async function updateUserRole(userId: string, role: 'USER' | 'ADMIN'): Pr
   } catch (error) {
     console.error('updateUserRole error:', error);
     return false;
+  }
+}
+
+export async function getUsers(options: {
+  page?: number;
+  limit?: number;
+  role?: string;
+} = {}): Promise<{ users: UserWithRole[]; total: number }> {
+  const { page = 1, limit = 20, role } = options;
+  
+  try {
+    // List all users from Supabase Auth
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (error) {
+      console.error('getUsers error:', error);
+      return { users: [], total: 0 };
+    }
+
+    // Transform users and filter by role if needed
+    let transformedUsers: UserWithRole[] = users.map(user => ({
+      id: user.id,
+      email: user.email || '',
+      name: user.user_metadata?.name || user.user_metadata?.full_name,
+      image: user.user_metadata?.avatar_url,
+      role: (user.user_metadata?.role as 'USER' | 'ADMIN') || 'USER',
+    }));
+
+    if (role) {
+      transformedUsers = transformedUsers.filter(u => u.role === role);
+    }
+
+    // Pagination
+    const total = transformedUsers.length;
+    const start = (page - 1) * limit;
+    const paginatedUsers = transformedUsers.slice(start, start + limit);
+
+    return { users: paginatedUsers, total };
+  } catch (error) {
+    console.error('getUsers error:', error);
+    return { users: [], total: 0 };
+  }
+}
+
+export async function getUserById(userId: string): Promise<UserWithRole | null> {
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    
+    if (error || !user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email || '',
+      name: user.user_metadata?.name || user.user_metadata?.full_name,
+      image: user.user_metadata?.avatar_url,
+      role: (user.user_metadata?.role as 'USER' | 'ADMIN') || 'USER',
+    };
+  } catch (error) {
+    console.error('getUserById error:', error);
+    return null;
   }
 }
 

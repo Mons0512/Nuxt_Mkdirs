@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '../../../utils/supabase'
-import { getCurrentUser } from '../../../utils/auth'
+import { getCurrentUser, getUsers } from '../../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const token = getCookie(event, 'sb-access-token')
@@ -13,13 +13,15 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // Get users count from Supabase Auth instead of database
+    const { total: usersCount } = await getUsers({ limit: 1000 })
+
     const [
       itemsCount,
       categoriesCount,
       tagsCount,
       collectionsCount,
       groupsCount,
-      usersCount,
       ordersCount,
       subscribersCount,
       blogPostsCount,
@@ -31,7 +33,6 @@ export default defineEventHandler(async (event) => {
       supabaseAdmin.from('tags').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('collections').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('groups').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('orders').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('subscribers').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('blog_posts').select('*', { count: 'exact', head: true }),
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event) => {
         tags: tagsCount.count || 0,
         collections: collectionsCount.count || 0,
         groups: groupsCount.count || 0,
-        users: usersCount.count || 0,
+        users: usersCount,
         orders: ordersCount.count || 0,
         subscribers: subscribersCount.count || 0,
         blogPosts: blogPostsCount.count || 0

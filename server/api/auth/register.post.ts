@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     options: {
       data: {
         name,
+        role: 'USER',
       },
     },
   });
@@ -34,16 +35,6 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       message: error.message,
-    });
-  }
-
-  if (data.user) {
-    await supabase.from('users').upsert({
-      id: data.user.id,
-      email: data.user.email,
-      name,
-      role: 'USER',
-      email_verified: data.user.email_confirmed_at ? new Date().toISOString() : null,
     });
   }
 
