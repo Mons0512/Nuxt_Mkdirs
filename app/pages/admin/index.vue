@@ -15,22 +15,20 @@ function formatDate(date: string) {
 }
 
 const statCards = computed(() => [
-  { label: 'Total Items', value: stats.value.items, icon: '📁', color: 'bg-blue-500', path: '/admin/items' },
-  { label: 'Categories', value: stats.value.categories, icon: '📂', color: 'bg-green-500', path: '/admin/categories' },
-  { label: 'Tags', value: stats.value.tags, icon: '🏷️', color: 'bg-yellow-500', path: '/admin/tags' },
-  { label: 'Collections', value: stats.value.collections, icon: '📚', color: 'bg-purple-500', path: '/admin/collections' },
-  { label: 'Users', value: stats.value.users, icon: '👤', color: 'bg-indigo-500', path: '/admin/users' },
-  { label: 'Blog Posts', value: stats.value.blogPosts, icon: '📝', color: 'bg-pink-500', path: '/admin/blog/posts' },
-  { label: 'Orders', value: stats.value.orders, icon: '💳', color: 'bg-orange-500', path: '/admin/orders' },
-  { label: 'Subscribers', value: stats.value.subscribers, icon: '📧', color: 'bg-teal-500', path: '/admin/subscribers' },
+  { label: 'Total Products', value: stats.value.items || 0, icon: 'package', color: 'bg-blue-100 text-blue-600' },
+  { label: 'User Submissions', value: '0', icon: 'inbox', color: 'bg-orange-100 text-orange-600' },
+  { label: 'Categories', value: stats.value.categories || 0, icon: 'folder', color: 'bg-purple-100 text-purple-600' },
+  { label: 'Tags', value: stats.value.tags || 0, icon: 'tag', color: 'bg-pink-100 text-pink-600' },
+  { label: 'Blog Posts', value: stats.value.blogPosts || 0, icon: 'file-text', color: 'bg-green-100 text-green-600' },
+  { label: 'Users', value: stats.value.users || 0, icon: 'users', color: 'bg-indigo-100 text-indigo-600' },
 ])
 </script>
 
 <template>
   <div>
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
-      <p class="text-gray-600">Welcome back! Here's what's happening with your directory.</p>
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
+      <p class="text-gray-500 text-sm">Welcome to your admin dashboard</p>
     </div>
 
     <div v-if="pending" class="text-center py-12">
@@ -38,81 +36,97 @@ const statCards = computed(() => [
     </div>
 
     <template v-else>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <NuxtLink
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div
           v-for="card in statCards"
           :key="card.label"
-          :to="card.path"
-          class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+          class="bg-white border border-gray-200 rounded-xl p-5 flex items-center justify-between"
         >
-          <div class="flex items-center">
-            <div :class="[card.color, 'w-12 h-12 rounded-lg flex items-center justify-center text-white text-xl']">
-              {{ card.icon }}
-            </div>
-            <div class="ml-4">
-              <p class="text-sm text-gray-600">{{ card.label }}</p>
-              <p class="text-2xl font-bold text-gray-900">{{ card.value }}</p>
-            </div>
+          <div>
+            <p class="text-sm text-gray-600">{{ card.label }}</p>
+            <p class="text-3xl font-bold text-gray-900 mt-1">{{ card.value }}</p>
           </div>
-        </NuxtLink>
+          <div :class="['w-11 h-11 rounded-lg flex items-center justify-center', card.color]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <template v-if="card.icon === 'package'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </template>
+              <template v-else-if="card.icon === 'inbox'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </template>
+              <template v-else-if="card.icon === 'folder'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </template>
+              <template v-else-if="card.icon === 'tag'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+              </template>
+              <template v-else-if="card.icon === 'file-text'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </template>
+              <template v-else-if="card.icon === 'users'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </template>
+            </svg>
+          </div>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Recent Items</h3>
-            <NuxtLink to="/admin/items" class="text-sm text-indigo-600 hover:text-indigo-800">View All</NuxtLink>
+      <!-- Two Columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Recent User Submissions -->
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-900">Recent User Submissions</h3>
+            <button class="text-xs text-gray-500 hover:text-gray-700">View All →</button>
           </div>
-          <div v-if="recentItems.length === 0" class="text-center py-8 text-gray-500">
-            No recent items found
-          </div>
-          <div v-else class="space-y-4">
-            <div
-              v-for="item in recentItems"
-              :key="item.id"
-              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</p>
-                <p class="text-sm text-gray-500">{{ formatDate(item.created_at) }}</p>
-              </div>
-              <span
-                :class="[
-                  'px-2 py-1 text-xs font-medium rounded-full',
-                  item.publish_date ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                ]"
-              >
-                {{ item.publish_date ? 'Published' : 'Draft' }}
-              </span>
+          <div class="p-6">
+            <div class="flex flex-col items-center justify-center py-8 text-gray-400">
+              <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </svg>
+              <p class="text-sm">No user submissions yet</p>
             </div>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Pending Items</h3>
-            <NuxtLink to="/admin/items" class="text-sm text-indigo-600 hover:text-indigo-800">Review All</NuxtLink>
+        <!-- Recent Products -->
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-900">Recent Products</h3>
+            <button class="text-xs text-gray-500 hover:text-gray-700">View All →</button>
           </div>
-          <div v-if="pendingItems.length === 0" class="text-center py-8 text-gray-500">
-            No pending items to review
-          </div>
-          <div v-else class="space-y-4">
-            <div
-              v-for="item in pendingItems"
-              :key="item.id"
-              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</p>
-                <p class="text-sm text-gray-500">{{ formatDate(item.created_at) }}</p>
-              </div>
-              <NuxtLink
-                :to="`/admin/items/${item.id}`"
-                class="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+          <div class="divide-y divide-gray-100">
+            <template v-if="recentItems.length > 0">
+              <div
+                v-for="item in recentItems"
+                :key="item.id"
+                class="flex items-center justify-between px-4 py-3"
               >
-                Edit
-              </NuxtLink>
-            </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ item.name }}</p>
+                    <p class="text-xs text-gray-400">IDE & Editors • {{ formatDate(item.created_at) }}</p>
+                  </div>
+                </div>
+                <NuxtLink
+                  :to="`/admin/items/${item.id}`"
+                  class="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Edit
+                </NuxtLink>
+              </div>
+            </template>
+            <template v-else>
+              <div class="flex flex-col items-center justify-center py-8 text-gray-400">
+                <p class="text-sm">No recent products</p>
+              </div>
+            </template>
           </div>
         </div>
       </div>

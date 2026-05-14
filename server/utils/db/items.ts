@@ -171,6 +171,27 @@ export async function getItems(
     }
   }
 
+  if (options.tag) {
+    const { data: tagData } = await supabase
+      .from('tags')
+      .select('id')
+      .eq('slug', options.tag)
+      .single();
+
+    if (tagData) {
+      const { data: itemIds } = await supabase
+        .from('item_tags')
+        .select('item_id')
+        .eq('tag_id', tagData.id);
+
+      if (itemIds && itemIds.length > 0) {
+        query = query.in('id', itemIds.map(i => i.item_id));
+      } else {
+        query = query.in('id', ['00000000-0000-0000-0000-000000000000']);
+      }
+    }
+  }
+
   if (options.search) {
     query = query.or(`name.ilike.%${options.search}%,description.ilike.%${options.search}%`);
   }

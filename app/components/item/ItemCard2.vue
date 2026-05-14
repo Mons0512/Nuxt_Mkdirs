@@ -76,11 +76,11 @@ const bgImageUrl = computed(() => {
           <NuxtLink
             v-for="(tag, index) in item.tags.slice(0, 3)"
             :key="index"
-            :to="`/tag/${(tag.slug || tag.name).toLowerCase().replace(/[\s/]+/g, '-')}`"
+            :to="`/tag/${((tag.slug || tag.name || '').toLowerCase()).replace(/[\s/]+/g, '-')}`"
             class="flex items-center gap-1 text-xs text-white/60 hover:text-white transition-colors"
           >
             <Hash class="w-3 h-3" />
-            {{ tag.name }}
+            {{ tag.name || '' }}
           </NuxtLink>
         </div>
       </div>

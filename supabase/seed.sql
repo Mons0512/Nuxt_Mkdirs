@@ -1,9 +1,51 @@
 -- Supabase Seed Data
 -- For Nuxt Mkdirs Navigation Site
 -- Run this SQL in Supabase SQL Editor AFTER running schema.sql
+-- NOTE: Users are managed via Supabase Auth, NOT via this seed file.
+--       Create test users in Supabase Dashboard > Authentication.
 
 -- ============================================================================
--- CLEAR EXISTING DATA (Optional - for clean slate)
+-- STEP 1: CREATE TEST USERS IN SUPABASE AUTH (IMPORTANT!)
+-- ============================================================================
+-- Before running this seed file:
+-- 1. Go to Supabase Dashboard > Authentication > Users
+-- 2. Create these 3 test users (or use your own):
+--    - admin@example.com (password: whatever you want)
+--    - john@example.com (password: whatever you want) 
+--    - jane@example.com (password: whatever you want)
+-- 3. After creating users, COPY THEIR USER IDS (UUIDs)
+-- 4. UPDATE the UUIDs below in this seed file before running!
+-- 5. Also run the UPDATE auth.users queries below to set roles!
+
+-- Set admin role (run this after creating users):
+/*
+UPDATE auth.users 
+SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role":"ADMIN","name":"Admin User"}' 
+WHERE email = 'admin@example.com';
+
+UPDATE auth.users 
+SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role":"USER","name":"John Doe"}' 
+WHERE email = 'john@example.com';
+
+UPDATE auth.users 
+SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"role":"USER","name":"Jane Smith"}' 
+WHERE email = 'jane@example.com';
+*/
+
+-- ============================================================================
+-- REPLACE THESE UUIDS WITH YOUR REAL USER IDS FROM SUPABASE AUTH!
+-- ============================================================================
+-- Get your user IDs from: Supabase Dashboard > Authentication > Users
+-- Copy each user's UUID and paste them below:
+\set admin_user_id '11111111-1111-1111-1111-111111111111'
+\set user1_id '22222222-2222-2222-2222-222222222222'
+\set user2_id '33333333-3333-3333-3333-333333333333'
+
+-- If \set doesn't work in your SQL editor, replace ALL occurrences 
+-- of :'admin_user_id', :'user1_id', :'user2_id' with your actual UUIDs!
+
+-- ============================================================================
+-- OPTIONAL: CLEAR EXISTING DATA
 -- ============================================================================
 -- DELETE FROM item_collections;
 -- DELETE FROM item_tags;
@@ -20,19 +62,6 @@
 -- DELETE FROM subscribers;
 -- DELETE FROM pages;
 -- DELETE FROM settings;
--- DELETE FROM sessions;
--- DELETE FROM accounts;
--- DELETE FROM verification_tokens;
--- DELETE FROM password_reset_tokens;
--- DELETE FROM users;
-
--- ============================================================================
--- USERS (Admin and Test Users)
--- ============================================================================
-INSERT INTO users (id, name, email, role, provider, password, email_verified) VALUES
-('11111111-1111-1111-1111-111111111111', 'Admin User', 'admin@example.com', 'ADMIN', 'email', '$2a$10$example-hashed-password-admin', NOW()),
-('22222222-2222-2222-2222-222222222222', 'John Doe', 'john@example.com', 'USER', 'email', '$2a$10$example-hashed-password-john', NOW()),
-('33333333-3333-3333-3333-333333333333', 'Jane Smith', 'jane@example.com', 'USER', 'email', '$2a$10$example-hashed-password-jane', NOW());
 
 -- ============================================================================
 -- GROUPS
@@ -74,31 +103,21 @@ INSERT INTO collections (id, name, slug, description, icon_url, icon_alt, priori
 
 -- ============================================================================
 -- ITEMS (Navigation Items)
+-- NOTE: Remember to replace the submitter_id with your actual user IDs!
 -- ============================================================================
 INSERT INTO items (id, name, slug, link, affiliate_link, description, introduction, image_url, image_alt, icon_url, icon_alt, featured, sponsor, sponsor_start_date, sponsor_end_date, publish_date, price_plan, free_plan_status, pro_plan_status, sponsor_plan_status, paid, submitter_id) VALUES
-('e1111111-1111-1111-1111-111111111111', 'Vue.js', 'vuejs', 'https://vuejs.org', NULL, 'The Progressive JavaScript Framework', 'Vue.js is a progressive framework for building user interfaces. It is designed from the ground up to be incrementally adoptable.', 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800', 'Vue.js logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '30 days', NOW(), 'sponsor', 'approved', 'success', 'success', TRUE, '11111111-1111-1111-1111-111111111111'),
-
-('e2222222-2222-2222-2222-222222222222', 'React', 'react', 'https://react.dev', NULL, 'The library for web and native user interfaces', 'React lets you build user interfaces out of individual pieces called components.', 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800', 'React logo', NULL, NULL, TRUE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, '22222222-2222-2222-2222-222222222222'),
-
-('e3333333-3333-3333-3333-333333333333', 'Next.js', 'nextjs', 'https://nextjs.org', NULL, 'The React Framework for the Web', 'Next.js enables you to create full-stack Web applications by extending the latest React features.', 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800', 'Next.js logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '15 days', NOW(), 'pro', 'approved', 'success', 'success', TRUE, '11111111-1111-1111-1111-111111111111'),
-
-('e4444444-4444-4444-4444-444444444444', 'Nuxt', 'nuxt', 'https://nuxt.com', NULL, 'The Intuitive Vue Framework', 'Nuxt is an open source framework that makes web development simple and powerful.', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800', 'Nuxt logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'pending', 'submitting', 'submitting', FALSE, '33333333-3333-3333-3333-333333333333'),
-
-('e5555555-5555-5555-5555-555555555555', 'TypeScript', 'typescript', 'https://www.typescriptlang.org', NULL, 'JavaScript with syntax for types', 'TypeScript is a strongly typed programming language that builds on JavaScript.', 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800', 'TypeScript logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, '22222222-2222-2222-2222-222222222222'),
-
-('e6666666-6666-6666-6666-666666666666', 'Tailwind CSS', 'tailwindcss', 'https://tailwindcss.com', NULL, 'A utility-first CSS framework', 'Tailwind CSS is a utility-first CSS framework for rapidly building custom designs.', 'https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=800', 'Tailwind CSS logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '20 days', NOW(), 'sponsor', 'approved', 'success', 'success', TRUE, '11111111-1111-1111-1111-111111111111'),
-
-('e7777777-7777-7777-7777-777777777777', 'PostgreSQL', 'postgresql', 'https://www.postgresql.org', NULL, 'The worlds most advanced open source database', 'PostgreSQL is a powerful, open source object-relational database system.', 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800', 'PostgreSQL logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, '33333333-3333-3333-3333-333333333333'),
-
-('e8888888-8888-8888-8888-888888888888', 'Supabase', 'supabase', 'https://supabase.com', NULL, 'The open source Firebase alternative', 'Supabase is an open source Firebase alternative providing all the backend services you need.', 'https://images.unsplash.com/photo-1565473227480-2a9f7dc27c4c?w=800', 'Supabase logo', NULL, NULL, TRUE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, '22222222-2222-2222-2222-222222222222'),
-
-('e9999999-9999-9999-9999-999999999999', 'ChatGPT', 'chatgpt', 'https://chat.openai.com', NULL, 'AI conversational assistant', 'ChatGPT is an AI assistant designed to help with a wide range of tasks.', 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800', 'ChatGPT logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '30 days', NOW(), 'sponsor', 'approved', 'success', 'success', TRUE, '11111111-1111-1111-1111-111111111111'),
-
-('eaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Figma', 'figma', 'https://figma.com', NULL, 'The collaborative interface design tool', 'Figma is a collaborative web application for interface design and prototyping.', 'https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=800', 'Figma logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'pro', 'approved', 'success', 'submitting', TRUE, '11111111-1111-1111-1111-111111111111'),
-
-('ebbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Obsidian', 'obsidian', 'https://obsidian.md', NULL, 'A second brain for you', 'Obsidian is a powerful knowledge base that works on top of your local folder of plain text Markdown files.', 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800', 'Obsidian logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, '33333333-3333-3333-3333-333333333333'),
-
-('eccccccc-cccc-cccc-cccc-cccccccccccc', 'Notion', 'notion', 'https://notion.so', NULL, 'The connected workspace', 'Notion is a workspace for your notes, tasks, wikis, and databases.', 'https://images.unsplash.com/photo-1655720828018-edd2daec9349?w=800', 'Notion logo', NULL, NULL, TRUE, FALSE, NULL, NULL, NOW(), 'pro', 'approved', 'success', 'submitting', TRUE, '22222222-2222-2222-2222-222222222222');
+('e1111111-1111-1111-1111-111111111111', 'Vue.js', 'vuejs', 'https://vuejs.org', NULL, 'The Progressive JavaScript Framework', 'Vue.js is a progressive framework for building user interfaces. It is designed from the ground up to be incrementally adoptable.', 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800', 'Vue.js logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '30 days', NOW(), 'sponsor', 'approved', 'success', 'success', TRUE, :'admin_user_id'),
+('e2222222-2222-2222-2222-222222222222', 'React', 'react', 'https://react.dev', NULL, 'The library for web and native user interfaces', 'React lets you build user interfaces out of individual pieces called components.', 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800', 'React logo', NULL, NULL, TRUE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, :'user1_id'),
+('e3333333-3333-3333-3333-333333333333', 'Next.js', 'nextjs', 'https://nextjs.org', NULL, 'The React Framework for the Web', 'Next.js enables you to create full-stack Web applications by extending the latest React features.', 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800', 'Next.js logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '15 days', NOW(), 'pro', 'approved', 'success', 'success', TRUE, :'admin_user_id'),
+('e4444444-4444-4444-4444-444444444444', 'Nuxt', 'nuxt', 'https://nuxt.com', NULL, 'The Intuitive Vue Framework', 'Nuxt is an open source framework that makes web development simple and powerful.', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800', 'Nuxt logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'pending', 'submitting', 'submitting', FALSE, :'user2_id'),
+('e5555555-5555-5555-5555-555555555555', 'TypeScript', 'typescript', 'https://www.typescriptlang.org', NULL, 'JavaScript with syntax for types', 'TypeScript is a strongly typed programming language that builds on JavaScript.', 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800', 'TypeScript logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, :'user1_id'),
+('e6666666-6666-6666-6666-666666666666', 'Tailwind CSS', 'tailwindcss', 'https://tailwindcss.com', NULL, 'A utility-first CSS framework', 'Tailwind CSS is a utility-first CSS framework for rapidly building custom designs.', 'https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?w=800', 'Tailwind CSS logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '20 days', NOW(), 'sponsor', 'approved', 'success', 'success', TRUE, :'admin_user_id'),
+('e7777777-7777-7777-7777-777777777777', 'PostgreSQL', 'postgresql', 'https://www.postgresql.org', NULL, 'The worlds most advanced open source database', 'PostgreSQL is a powerful, open source object-relational database system.', 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800', 'PostgreSQL logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, :'user2_id'),
+('e8888888-8888-8888-8888-888888888888', 'Supabase', 'supabase', 'https://supabase.com', NULL, 'The open source Firebase alternative', 'Supabase is an open source Firebase alternative providing all the backend services you need.', 'https://images.unsplash.com/photo-1565473227480-2a9f7dc27c4c?w=800', 'Supabase logo', NULL, NULL, TRUE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, :'user1_id'),
+('e9999999-9999-9999-9999-999999999999', 'ChatGPT', 'chatgpt', 'https://chat.openai.com', NULL, 'AI conversational assistant', 'ChatGPT is an AI assistant designed to help with a wide range of tasks.', 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800', 'ChatGPT logo', NULL, NULL, TRUE, TRUE, NOW(), NOW() + INTERVAL '30 days', NOW(), 'sponsor', 'approved', 'success', 'success', TRUE, :'admin_user_id'),
+('eaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Figma', 'figma', 'https://figma.com', NULL, 'The collaborative interface design tool', 'Figma is a collaborative web application for interface design and prototyping.', 'https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=800', 'Figma logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'pro', 'approved', 'success', 'submitting', TRUE, :'admin_user_id'),
+('ebbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Obsidian', 'obsidian', 'https://obsidian.md', NULL, 'A second brain for you', 'Obsidian is a powerful knowledge base that works on top of your local folder of plain text Markdown files.', 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800', 'Obsidian logo', NULL, NULL, FALSE, FALSE, NULL, NULL, NOW(), 'free', 'approved', 'submitting', 'submitting', FALSE, :'user2_id'),
+('eccccccc-cccc-cccc-cccc-cccccccccccc', 'Notion', 'notion', 'https://notion.so', NULL, 'The connected workspace', 'Notion is a workspace for your notes, tasks, wikis, and databases.', 'https://images.unsplash.com/photo-1655720828018-edd2daec9349?w=800', 'Notion logo', NULL, NULL, TRUE, FALSE, NULL, NULL, NOW(), 'pro', 'approved', 'success', 'submitting', TRUE, :'user1_id');
 
 -- ============================================================================
 -- ITEM-CATEGORIES JUNCTION
@@ -163,7 +182,7 @@ INSERT INTO item_collections (item_id, collection_id) VALUES
 ('eccccccc-cccc-cccc-cccc-cccccccccccc', 'd3333333-3333-3333-3333-333333333333');
 
 -- ============================================================================
--- BLOG CATEGORIES (using hex prefix 6 to avoid f/g/h invalid chars)
+-- BLOG CATEGORIES
 -- ============================================================================
 INSERT INTO blog_categories (id, name, slug, description, priority) VALUES
 ('61111111-1111-1111-1111-111111111111', 'Tutorials', 'tutorials', 'Step-by-step guides and tutorials', 100),
@@ -171,16 +190,14 @@ INSERT INTO blog_categories (id, name, slug, description, priority) VALUES
 ('63333333-3333-3333-3333-333333333333', 'Tips & Tricks', 'tips-tricks', 'Useful tips and tricks', 80);
 
 -- ============================================================================
--- BLOG POSTS (using hex prefix 7 to avoid f/g/h invalid chars)
+-- BLOG POSTS
+-- NOTE: Remember to replace author_id with your actual user IDs!
 -- ============================================================================
 INSERT INTO blog_posts (id, title, slug, excerpt, featured, body, image_url, image_alt, publish_date, author_id) VALUES
-('71111111-1111-1111-1111-111111111111', 'Getting Started with Vue 3', 'getting-started-with-vue-3', 'Learn how to build modern web applications with Vue 3', TRUE, '<p>Vue 3 is the latest version of the Vue framework. In this tutorial, we will learn how to get started with Vue 3 and build our first application.</p><h2>Installation</h2><p>First, let us create a new Vue 3 project using the CLI.</p>', 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800', 'Vue 3 tutorial', NOW() - INTERVAL '5 days', '11111111-1111-1111-1111-111111111111'),
-
-('72222222-2222-2222-2222-222222222222', 'Why Supabase is the Future of Backend', 'why-supabase-is-the-future', 'Exploring Supabase as an open source Firebase alternative', TRUE, '<p>Supabase is an open source Firebase alternative that provides a complete backend solution. Let us explore why it is gaining so much popularity.</p>', 'https://images.unsplash.com/photo-1565473227480-2a9f7dc27c4c?w=800', 'Supabase illustration', NOW() - INTERVAL '3 days', '22222222-2222-2222-2222-222222222222'),
-
-('73333333-3333-3333-3333-333333333333', '10 VS Code Extensions You Need in 2024', 'vscode-extensions-2024', 'Must-have VS Code extensions for developers', FALSE, '<p>Visual Studio Code is one of the most popular code editors. Here are the top 10 extensions you should install.</p>', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800', 'VS Code', NOW() - INTERVAL '1 day', '11111111-1111-1111-1111-111111111111'),
-
-('74444444-4444-4444-4444-444444444444', 'Understanding TypeScript Generics', 'understanding-typescript-generics', 'A deep dive into TypeScript generics', FALSE, '<p>Generics are one of the most powerful features in TypeScript. Let us understand how to use them effectively.</p>', 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800', 'TypeScript', NOW(), '33333333-3333-3333-3333-333333333333');
+('71111111-1111-1111-1111-111111111111', 'Getting Started with Vue 3', 'getting-started-with-vue-3', 'Learn how to build modern web applications with Vue 3', TRUE, '<p>Vue 3 is the latest version of the Vue framework. In this tutorial, we will learn how to get started with Vue 3 and build our first application.</p><h2>Installation</h2><p>First, let us create a new Vue 3 project using the CLI.</p>', 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?w=800', 'Vue 3 tutorial', NOW() - INTERVAL '5 days', :'admin_user_id'),
+('72222222-2222-2222-2222-222222222222', 'Why Supabase is the Future of Backend', 'why-supabase-is-the-future', 'Exploring Supabase as an open source Firebase alternative', TRUE, '<p>Supabase is an open source Firebase alternative that provides a complete backend solution. Let us explore why it is gaining so much popularity.</p>', 'https://images.unsplash.com/photo-1565473227480-2a9f7dc27c4c?w=800', 'Supabase illustration', NOW() - INTERVAL '3 days', :'user1_id'),
+('73333333-3333-3333-3333-333333333333', '10 VS Code Extensions You Need in 2024', 'vscode-extensions-2024', 'Must-have VS Code extensions for developers', FALSE, '<p>Visual Studio Code is one of the most popular code editors. Here are the top 10 extensions you should install.</p>', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800', 'VS Code', NOW() - INTERVAL '1 day', :'admin_user_id'),
+('74444444-4444-4444-4444-444444444444', 'Understanding TypeScript Generics', 'understanding-typescript-generics', 'A deep dive into TypeScript generics', FALSE, '<p>Generics are one of the most powerful features in TypeScript. Let us understand how to use them effectively.</p>', 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800', 'TypeScript', NOW(), :'user2_id');
 
 -- ============================================================================
 -- BLOG POST-CATEGORIES JUNCTION
@@ -200,19 +217,20 @@ INSERT INTO blog_post_related (blog_post_id, related_post_id) VALUES
 ('72222222-2222-2222-2222-222222222222', '71111111-1111-1111-1111-111111111111');
 
 -- ============================================================================
--- ORDERS (using hex prefix 8 to avoid f/g/h invalid chars)
+-- ORDERS
+-- NOTE: Remember to replace user_id with your actual user IDs!
 -- ============================================================================
 INSERT INTO orders (id, user_id, item_id, status, payment_provider, payment_id, amount, currency, created_at) VALUES
-('81111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'e3333333-3333-3333-3333-333333333333', 'success', 'creem', 'creem_payment_123', 29.99, 'USD', NOW() - INTERVAL '10 days'),
-('82222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333', 'e6666666-6666-6666-6666-666666666666', 'success', 'creem', 'creem_payment_456', 49.99, 'USD', NOW() - INTERVAL '5 days'),
-('83333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', 'eccccccc-cccc-cccc-cccc-cccccccccccc', 'success', 'creem', 'creem_payment_789', 19.99, 'USD', NOW() - INTERVAL '2 days');
+('81111111-1111-1111-1111-111111111111', :'user1_id', 'e3333333-3333-3333-3333-333333333333', 'success', 'creem', 'creem_payment_123', 29.99, 'USD', NOW() - INTERVAL '10 days'),
+('82222222-2222-2222-2222-222222222222', :'user2_id', 'e6666666-6666-6666-6666-666666666666', 'success', 'creem', 'creem_payment_456', 49.99, 'USD', NOW() - INTERVAL '5 days'),
+('83333333-3333-3333-3333-333333333333', :'user1_id', 'eccccccc-cccc-cccc-cccc-cccccccccccc', 'success', 'creem', 'creem_payment_789', 19.99, 'USD', NOW() - INTERVAL '2 days');
 
 -- Update items with order references
 UPDATE items SET order_id = '81111111-1111-1111-1111-111111111111' WHERE id = 'e3333333-3333-3333-3333-333333333333';
 UPDATE items SET order_id = '82222222-2222-2222-2222-222222222222' WHERE id = 'e6666666-6666-6666-6666-666666666666';
 
 -- ============================================================================
--- SUBSCRIBERS (using hex prefix 9)
+-- SUBSCRIBERS
 -- ============================================================================
 INSERT INTO subscribers (id, email, status, source, metadata, created_at, updated_at) VALUES
 ('91111111-1111-1111-1111-111111111111', 'subscriber1@example.com', 'active', 'website', '{"name": "Subscriber One"}', NOW(), NOW()),
@@ -220,7 +238,7 @@ INSERT INTO subscribers (id, email, status, source, metadata, created_at, update
 ('93333333-3333-3333-3333-333333333333', 'subscriber3@example.com', 'active', 'newsletter', '{"name": "Subscriber Three"}', NOW(), NOW());
 
 -- ============================================================================
--- PAGES (using hex prefix a)
+-- PAGES
 -- ============================================================================
 INSERT INTO pages (id, title, slug, excerpt, body, publish_date) VALUES
 ('a1111111-1111-1111-1111-111111111111', 'Privacy Policy', 'privacy-policy', 'Our privacy policy', '<h1>Privacy Policy</h1><p>This is our privacy policy page content.</p>', NOW()),
@@ -228,7 +246,7 @@ INSERT INTO pages (id, title, slug, excerpt, body, publish_date) VALUES
 ('a3333333-3333-3333-3333-333333333333', 'About Us', 'about-us', 'Learn more about us', '<h1>About Us</h1><p>We are a team passionate about building great tools for developers.</p>', NOW());
 
 -- ============================================================================
--- SETTINGS (using hex prefix b)
+-- SETTINGS
 -- ============================================================================
 INSERT INTO settings (id, key, value) VALUES
 ('b1111111-1111-1111-1111-111111111111', 'site_name', '{"value": "Nuxt Mkdirs"}'),
@@ -240,5 +258,4 @@ INSERT INTO settings (id, key, value) VALUES
 -- ============================================================================
 -- COMPLETION MESSAGE
 -- ============================================================================
--- Seed data insertion complete!
--- You can now test your application with the sample data.
+SELECT '✅ Seed data insertion complete! If you see this message, everything worked!' AS message;

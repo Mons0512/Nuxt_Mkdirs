@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { LogOut, FileText, Settings } from 'lucide-vue-next';
+import { LogOut, FileText, Settings, Shield } from 'lucide-vue-next';
 
 const { user, signOut, isLoading } = useAuth();
 
-const menuItems = [
-  { title: 'My Submissions', href: '/dashboard', icon: FileText },
-  { title: 'Settings', href: '/settings', icon: Settings },
-];
+const menuItems = computed(() => {
+  const items = [
+    { title: 'My Submissions', href: '/dashboard', icon: FileText },
+  ];
+  
+  // 只有ADMIN角色才显示后台管理入口
+  if (user.value?.role === 'ADMIN') {
+    items.push({ title: 'Admin Dashboard', href: '/admin', icon: Shield });
+  }
+  
+  items.push({ title: 'Settings', href: '/settings', icon: Settings });
+  
+  return items;
+});
 
 async function handleSignOut() {
   await signOut();

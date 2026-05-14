@@ -15,17 +15,29 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const page = Number(query.page) || 1
   const limit = Number(query.limit) || 20
+  const keyword = (query.keyword as string) || ''
+  const status = (query.status as string) || ''
 
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  const { data: orders, count, error: dbError } = await supabaseAdmin
+  let dbQuery = supabaseAdmin
     .from('orders')
     .select(`
       *,
       items (id, name, slug),
       users (id, name, email)
     `, { count: 'exact' })
+
+  if (keyword) {
+    dbQuery = dbQuery.or(`id.ilike.%${keyword}%,users(name).ilike.%${keyword}%,users(email).ilike.%${keyword}%,items(name).ilike.%${keyword}%`)
+  }
+
+  if (status) {
+    dbQuery = dbQuery.eq('status', status)
+  }
+
+  const { data: orders, count, error: dbError } = await dbQuery
     .order('created_at', { ascending: false })
     .range(from, to)
 

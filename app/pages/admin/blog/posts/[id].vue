@@ -31,7 +31,15 @@ const form = reactive({
 
 watch(() => postData.value, (newVal) => {
   if (newVal) {
-    Object.assign(form, newVal)
+    form.title = newVal.title || ''
+    form.slug = newVal.slug || ''
+    form.excerpt = newVal.excerpt || ''
+    form.body = newVal.body || ''
+    form.image_url = newVal.image_url || ''
+    form.image_alt = newVal.image_alt || ''
+    form.featured = newVal.featured || false
+    form.publish_date = newVal.publish_date || ''
+    form.category_ids = newVal.category_ids || []
   }
 }, { immediate: true })
 

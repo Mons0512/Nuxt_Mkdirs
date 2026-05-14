@@ -153,12 +153,12 @@ const imageUrl = computed(() => {
           <NuxtLink
             v-for="(tag, index) in item.tags.slice(0, 3)"
             :key="index"
-            :to="`/tag/${(tag.slug || tag.name).toLowerCase().replace(/[\s/]+/g, '-')}`"
+            :to="`/tag/${((tag.slug || tag.name || '').toLowerCase()).replace(/[\s/]+/g, '-')}`"
             class="flex items-center justify-center space-x-0.5 group/tag"
           >
             <Hash :class="cn('w-3 h-3 icon-scale', imageUrl ? 'text-white/70' : 'text-muted-foreground')" />
             <span :class="cn('text-sm link-underline', imageUrl ? 'text-white/70' : 'text-muted-foreground')">
-              {{ tag.name }}
+              {{ tag.name || '' }}
             </span>
           </NuxtLink>
           <span v-if="item.tags.length > 3" :class="cn('text-sm px-1', imageUrl ? 'text-white/60' : 'text-muted-foreground')">

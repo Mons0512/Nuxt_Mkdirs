@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '../supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { User } from './items';
+import { getUserById } from '../auth';
+import type { UserWithRole } from '../auth';
 
 export interface BlogPost {
   id: string;
@@ -20,7 +21,7 @@ export interface BlogPost {
 export interface BlogPostWithRelations extends BlogPost {
   categories: BlogCategory[];
   related_posts?: BlogPost[];
-  author?: User;
+  author?: UserWithRole;
 }
 
 export interface BlogCategory {
@@ -193,19 +194,8 @@ async function getBlogPostCategories(supabase: SupabaseClient, postId: string): 
   return data?.map(d => d.blog_categories).filter(Boolean) || [];
 }
 
-async function getBlogPostAuthor(supabase: SupabaseClient, authorId: string): Promise<User | null> {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, name, email, image, role')
-    .eq('id', authorId)
-    .single();
-
-  if (error) {
-    console.error('getBlogPostAuthor error:', error);
-    return null;
-  }
-
-  return data;
+async function getBlogPostAuthor(supabase: SupabaseClient, authorId: string): Promise<UserWithRole | null> {
+  return getUserById(authorId);
 }
 
 export async function getBlogCategories(supabase: SupabaseClient): Promise<BlogCategory[]> {

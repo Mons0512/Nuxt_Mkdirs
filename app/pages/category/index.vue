@@ -36,7 +36,7 @@ const items = computed(() => {
     icon: item.icon_url,
     image: item.image_url,
     featured: item.featured,
-    tags: item.tags?.map((t: any) => t.name) || [],
+    tags: item.tags?.map((t: any) => ({ id: t.id, name: t.name, slug: t.slug })) || [],
     category: item.categories?.[0]?.name || '',
     categories: item.categories?.map((c: any) => ({
       id: c.id,

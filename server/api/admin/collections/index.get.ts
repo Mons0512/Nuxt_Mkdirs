@@ -12,14 +12,35 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden' });
   }
 
-  const { data, error: dbError } = await supabaseAdmin
+  const query = getQuery(event);
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 20;
+  const keyword = (query.keyword as string) || '';
+
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  let dbQuery = supabaseAdmin
     .from('collections')
-    .select('*')
-    .order('priority', { ascending: false });
+    .select('*', { count: 'exact' });
+
+  if (keyword) {
+    dbQuery = dbQuery.or(`name.ilike.%${keyword}%,slug.ilike.%${keyword}%,description.ilike.%${keyword}%`);
+  }
+
+  const { data, count, error: dbError } = await dbQuery
+    .order('priority', { ascending: false })
+    .range(from, to);
 
   if (dbError) {
     throw createError({ statusCode: 500, message: 'Failed to fetch collections' });
   }
 
-  return data || [];
+  return {
+    collections: data || [],
+    total: count || 0,
+    page,
+    limit,
+    totalPages: Math.ceil((count || 0) / limit),
+  };
 });
